@@ -24,6 +24,11 @@ class Config:
     dashboard_token: str | None
     facebook_access_token: str | None
     instagram_urls: list[str]
+    cache_ttl_seconds: int
+    alert_enabled: bool
+    alert_interval_minutes: int
+    alert_min_confidence: float
+    alert_cooldown_minutes: int
 
 
 def load_config() -> Config:
@@ -51,6 +56,16 @@ def load_config() -> Config:
     dashboard_token = os.getenv("DASHBOARD_TOKEN", "").strip() or None
     facebook_access_token = os.getenv("FACEBOOK_ACCESS_TOKEN", "").strip() or None
     instagram_urls = extract_instagram_urls(os.getenv("INSTAGRAM_URLS", ""))
+    cache_ttl_seconds = int(os.getenv("CACHE_TTL_SECONDS", "45"))
+    alert_enabled = os.getenv("ALERT_ENABLED", "true").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    alert_interval_minutes = int(os.getenv("ALERT_INTERVAL_MINUTES", "15"))
+    alert_min_confidence = float(os.getenv("ALERT_MIN_CONFIDENCE", "70"))
+    alert_cooldown_minutes = int(os.getenv("ALERT_COOLDOWN_MINUTES", "30"))
 
     if not api_token:
         raise ValueError(
@@ -61,6 +76,12 @@ def load_config() -> Config:
         raise ValueError("DERIV_SYMBOLS must include at least one symbol.")
     if tick_count < 50:
         raise ValueError("TICK_COUNT should be at least 50 for meaningful signals.")
+    if cache_ttl_seconds < 0:
+        raise ValueError("CACHE_TTL_SECONDS cannot be negative.")
+    if alert_interval_minutes < 1:
+        raise ValueError("ALERT_INTERVAL_MINUTES must be at least 1.")
+    if alert_cooldown_minutes < 0:
+        raise ValueError("ALERT_COOLDOWN_MINUTES cannot be negative.")
 
     return Config(
         app_id=app_id,
@@ -77,4 +98,9 @@ def load_config() -> Config:
         dashboard_token=dashboard_token,
         facebook_access_token=facebook_access_token,
         instagram_urls=instagram_urls,
+        cache_ttl_seconds=cache_ttl_seconds,
+        alert_enabled=alert_enabled,
+        alert_interval_minutes=alert_interval_minutes,
+        alert_min_confidence=alert_min_confidence,
+        alert_cooldown_minutes=alert_cooldown_minutes,
     )

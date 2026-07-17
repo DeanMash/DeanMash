@@ -45,6 +45,29 @@ python -m deriv_advisor telegram
 4. Message your bot → `/chatid` → set `TELEGRAM_ALLOWED_CHAT_IDS`
 5. Send `/suggest` from your phone
 
+### Scheduled high-confidence alerts
+
+With the Telegram bot running, it checks markets on a timer and messages you only when confidence is high enough:
+
+```env
+ALERT_ENABLED=true
+ALERT_INTERVAL_MINUTES=15
+ALERT_MIN_CONFIDENCE=70
+ALERT_COOLDOWN_MINUTES=30
+TELEGRAM_ALLOWED_CHAT_IDS=123456789
+```
+
+In Telegram:
+
+- `/alerts` — show settings
+- `/alerts on` / `/alerts off` — toggle while running
+
+## Performance
+
+- **Parallel tick fetch** — symbols are requested concurrently over one Deriv WebSocket
+- **TTL cache** — news/ticks/trades/full reports reuse results for `CACHE_TTL_SECONDS` (default 45)
+- Instagram fetch runs only when links are provided
+
 ## Instagram links
 
 Paste public Instagram **post/reel** links in:
@@ -110,6 +133,8 @@ python -m deriv_advisor -v web
 | `/suggest` | Analyze and send ideas |
 | `/suggest <instagram link>` | Analyze with Instagram caption tone |
 | `/ideas` | Same as `/suggest` |
+| `/alerts` | Show scheduled alert settings |
+| `/alerts on\|off` | Enable/disable scheduled alerts |
 | `/chatid` | Show your Telegram chat id |
 
 Paste a bare Instagram link in chat to run analysis with that post/reel.
@@ -139,4 +164,4 @@ pytest -q
 
 ## Next step (later)
 
-Optional: scheduled alerts, or gated auto-trade with hard risk limits.
+Optional: suggestion outcome tracking, or gated auto-trade with hard risk limits.

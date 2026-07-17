@@ -20,6 +20,11 @@ def _config(*, token: str | None = "secret") -> Config:
         dashboard_token=token,
         facebook_access_token=None,
         instagram_urls=[],
+        cache_ttl_seconds=45,
+        alert_enabled=True,
+        alert_interval_minutes=15,
+        alert_min_confidence=70,
+        alert_cooldown_minutes=30,
     )
 
 

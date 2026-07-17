@@ -41,7 +41,7 @@ class StatementTrade:
 
 
 class DerivClient:
-    """Async Deriv WebSocket client for read-only market/account data."""
+    """Async Deriv WebSocket client with concurrent request support."""
 
     def __init__(self, ws_url: str, api_token: str) -> None:
         self.ws_url = ws_url
@@ -49,13 +49,29 @@ class DerivClient:
         self._ws: ClientConnection | None = None
         self._req_id = 0
         self.account: AccountInfo | None = None
+        self._pending: dict[int, asyncio.Future] = {}
+        self._listener_task: asyncio.Task | None = None
 
     async def __aenter__(self) -> DerivClient:
         self._ws = await websockets.connect(self.ws_url, ping_interval=20, ping_timeout=20)
+        self._listener_task = asyncio.create_task(self._listen(), name="deriv-ws-listener")
         self.account = await self.authorize()
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
+        if self._listener_task is not None:
+            self._listener_task.cancel()
+            try:
+                await self._listener_task
+            except asyncio.CancelledError:
+                pass
+            self._listener_task = None
+
+        for fut in list(self._pending.values()):
+            if not fut.done():
+                fut.cancel()
+        self._pending.clear()
+
         if self._ws is not None:
             await self._ws.close()
             self._ws = None
@@ -64,24 +80,43 @@ class DerivClient:
         self._req_id += 1
         return self._req_id
 
+    async def _listen(self) -> None:
+        assert self._ws is not None
+        try:
+            async for raw in self._ws:
+                data = json.loads(raw)
+                req_id = data.get("req_id")
+                fut = self._pending.get(req_id)
+                if fut is None or fut.done():
+                    continue
+                if data.get("error"):
+                    err = data["error"]
+                    fut.set_exception(
+                        RuntimeError(f"Deriv API error: {err.get('code')} — {err.get('message')}")
+                    )
+                else:
+                    fut.set_result(data)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Deriv WebSocket listener stopped")
+            for fut in list(self._pending.values()):
+                if not fut.done():
+                    fut.set_exception(exc)
+
     async def _request(self, payload: dict[str, Any]) -> dict[str, Any]:
         if self._ws is None:
             raise RuntimeError("WebSocket is not connected")
 
         req_id = self._next_req_id()
-        message = {**payload, "req_id": req_id}
-        await self._ws.send(json.dumps(message))
-
-        while True:
-            raw = await asyncio.wait_for(self._ws.recv(), timeout=30)
-            data = json.loads(raw)
-            if data.get("req_id") != req_id:
-                # Ignore unrelated subscription pushes.
-                continue
-            if data.get("error"):
-                err = data["error"]
-                raise RuntimeError(f"Deriv API error: {err.get('code')} — {err.get('message')}")
-            return data
+        loop = asyncio.get_running_loop()
+        fut: asyncio.Future = loop.create_future()
+        self._pending[req_id] = fut
+        try:
+            await self._ws.send(json.dumps({**payload, "req_id": req_id}))
+            return await asyncio.wait_for(fut, timeout=30)
+        finally:
+            self._pending.pop(req_id, None)
 
     async def authorize(self) -> AccountInfo:
         data = await self._request({"authorize": self.api_token})
