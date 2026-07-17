@@ -19,8 +19,8 @@
         <p class="brand">Deriv Trade Advisor</p>
         <h1>Suggestions only</h1>
         <p class="lede">
-          Pull live ticks, news tone, and your recent Deriv activity — then review ranked ideas.
-          Nothing is traded for you.
+          Pull live ticks, news tone, Instagram captions you paste, and your recent Deriv activity —
+          then review ranked ideas. Nothing is traded for you.
         </p>
         <div class="controls">
           <label class="token-field">
@@ -31,6 +31,14 @@
               autocomplete="off"
               placeholder="Required if DASHBOARD_TOKEN is set"
             />
+          </label>
+          <label class="token-field ig-field">
+            <span>Instagram links</span>
+            <textarea
+              id="instagramInput"
+              rows="3"
+              placeholder="Paste one or more Instagram post/reel links"
+            ></textarea>
           </label>
           <button id="refreshBtn" type="button">Get suggestions</button>
         </div>
@@ -46,6 +54,12 @@
         <h2>News tone</h2>
         <p id="newsSummary" class="panel-body"></p>
         <ul id="newsList" class="news-list"></ul>
+      </section>
+
+      <section class="panel" id="instagramPanel" hidden>
+        <h2>Instagram</h2>
+        <p id="instagramSummary" class="panel-body"></p>
+        <ul id="instagramList" class="news-list"></ul>
       </section>
 
       <section class="panel" id="suggestionsPanel" hidden>

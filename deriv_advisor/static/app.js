@@ -1,4 +1,5 @@
 const tokenInput = document.getElementById("tokenInput");
+const instagramInput = document.getElementById("instagramInput");
 const refreshBtn = document.getElementById("refreshBtn");
 const statusEl = document.getElementById("status");
 const accountPanel = document.getElementById("accountPanel");
@@ -6,6 +7,9 @@ const accountLine = document.getElementById("accountLine");
 const newsPanel = document.getElementById("newsPanel");
 const newsSummary = document.getElementById("newsSummary");
 const newsList = document.getElementById("newsList");
+const instagramPanel = document.getElementById("instagramPanel");
+const instagramSummary = document.getElementById("instagramSummary");
+const instagramList = document.getElementById("instagramList");
 const suggestionsPanel = document.getElementById("suggestionsPanel");
 const suggestionsList = document.getElementById("suggestionsList");
 
@@ -31,6 +35,7 @@ function persistToken(value) {
 function renderReport(data) {
   accountPanel.hidden = false;
   newsPanel.hidden = false;
+  instagramPanel.hidden = false;
   suggestionsPanel.hidden = false;
 
   accountLine.textContent = `${data.account.loginid} · ${data.account.type} · ${data.account.balance.toFixed(2)} ${data.account.currency}`;
@@ -41,6 +46,24 @@ function renderReport(data) {
     const li = document.createElement("li");
     li.textContent = title;
     newsList.appendChild(li);
+  }
+
+  const ig = data.instagram || {};
+  instagramSummary.textContent = `${ig.summary || "No Instagram links provided."} (${ig.fetched_count || 0}/${ig.post_count || 0} captions loaded)`;
+  instagramList.innerHTML = "";
+  const captions = ig.sample_captions || [];
+  if (!captions.length && (ig.posts || []).length) {
+    for (const post of ig.posts) {
+      const li = document.createElement("li");
+      li.textContent = post.fetched ? post.caption || post.title : `${post.url} — ${post.note}`;
+      instagramList.appendChild(li);
+    }
+  } else {
+    for (const caption of captions) {
+      const li = document.createElement("li");
+      li.textContent = caption;
+      instagramList.appendChild(li);
+    }
   }
 
   suggestionsList.innerHTML = "";
@@ -84,12 +107,17 @@ function renderReport(data) {
 
 async function loadSuggestions() {
   const token = tokenInput.value.trim();
+  const instagramText = instagramInput.value.trim();
   persistToken(token);
 
   refreshBtn.disabled = true;
-  setStatus("Analyzing Deriv markets + news…");
+  setStatus(
+    instagramText
+      ? "Analyzing Deriv markets + news + Instagram links…"
+      : "Analyzing Deriv markets + news…"
+  );
 
-  const headers = {};
+  const headers = { "Content-Type": "application/json" };
   const params = new URLSearchParams();
   if (token) {
     headers["X-Dashboard-Token"] = token;
@@ -97,10 +125,17 @@ async function loadSuggestions() {
   }
 
   try {
-    const response = await fetch(`/api/suggestions?${params.toString()}`, { headers });
+    const response = await fetch(`/api/suggestions?${params.toString()}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ instagram_text: instagramText }),
+    });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(payload.detail || `Request failed (${response.status})`);
+      const detail = payload.detail;
+      throw new Error(
+        typeof detail === "string" ? detail : detail ? JSON.stringify(detail) : `Request failed (${response.status})`
+      );
     }
     renderReport(payload);
     setStatus(`Updated ${payload.generated_at}`);
@@ -114,9 +149,11 @@ async function loadSuggestions() {
 tokenInput.value = savedToken();
 refreshBtn.addEventListener("click", loadSuggestions);
 
-// Prefill token from ?token= if present.
 const bootParams = new URLSearchParams(window.location.search);
 if (bootParams.get("token")) {
   tokenInput.value = bootParams.get("token");
   persistToken(tokenInput.value);
+}
+if (bootParams.get("instagram")) {
+  instagramInput.value = bootParams.get("instagram");
 }

@@ -1,12 +1,20 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from .analyzer import NewsSentiment, TechnicalSignal, analyze_news, analyze_ticks
+from .analyzer import (
+    InstagramSignal,
+    NewsSentiment,
+    TechnicalSignal,
+    analyze_instagram,
+    analyze_news,
+    analyze_ticks,
+)
 from .config import Config
 from .deriv_client import AccountInfo, DerivClient, StatementTrade
+from .instagram_client import InstagramPost, extract_instagram_urls, fetch_instagram_posts
 from .news_client import NewsItem, fetch_news
 from .suggester import TradeSuggestion, build_suggestions
 
@@ -23,6 +31,18 @@ class AdviceReport:
     trades: list[StatementTrade]
     suggestions: list[TradeSuggestion]
     min_confidence: float
+    instagram: InstagramSignal = field(
+        default_factory=lambda: InstagramSignal(
+            score=0.0,
+            direction_hint="HOLD",
+            matched_symbols=[],
+            post_count=0,
+            fetched_count=0,
+            sample_captions=[],
+            summary="No Instagram links provided.",
+        )
+    )
+    instagram_posts: list[InstagramPost] = field(default_factory=list)
 
     def to_text(self, *, compact: bool = False) -> str:
         account_type = "DEMO" if self.account.is_virtual else "REAL"
@@ -42,6 +62,12 @@ class AdviceReport:
 
         for title in self.news.sample_titles[: 3 if compact else 5]:
             lines.append(f"  - {title}")
+
+        lines.append("")
+        lines.append("Instagram")
+        lines.append(f"• {self.instagram.summary}")
+        for caption in self.instagram.sample_captions[: 2 if compact else 4]:
+            lines.append(f"  - {caption}")
 
         lines.append("")
         lines.append(f"Suggestions (min {self.min_confidence:g}%)")
@@ -83,6 +109,27 @@ class AdviceReport:
                 "summary": self.news.summary,
                 "sample_titles": self.news.sample_titles,
             },
+            "instagram": {
+                "score": self.instagram.score,
+                "direction_hint": self.instagram.direction_hint,
+                "matched_symbols": self.instagram.matched_symbols,
+                "post_count": self.instagram.post_count,
+                "fetched_count": self.instagram.fetched_count,
+                "summary": self.instagram.summary,
+                "sample_captions": self.instagram.sample_captions,
+                "posts": [
+                    {
+                        "url": p.url,
+                        "fetched": p.fetched,
+                        "media_type": p.media_type,
+                        "author": p.author,
+                        "title": p.title,
+                        "caption": p.caption[:240],
+                        "note": p.note,
+                    }
+                    for p in self.instagram_posts
+                ],
+            },
             "suggestions": [
                 {
                     "symbol": s.symbol,
@@ -91,6 +138,7 @@ class AdviceReport:
                     "last_price": s.last_price,
                     "reasons": s.reasons,
                     "news_adjustment": s.news_adjustment,
+                    "instagram_adjustment": s.instagram_adjustment,
                 }
                 for s in self.suggestions
             ],
@@ -108,9 +156,25 @@ class AdviceReport:
         }
 
 
-async def generate_advice_report(config: Config) -> AdviceReport:
+async def generate_advice_report(
+    config: Config,
+    *,
+    instagram_urls: list[str] | None = None,
+) -> AdviceReport:
+    urls = list(instagram_urls or [])
+    # Also allow URLs configured in .env for default context.
+    for url in config.instagram_urls:
+        if url not in urls:
+            urls.append(url)
+
     news_items = fetch_news(config.news_api_key, max_items=20)
     news_sentiment = analyze_news(news_items)
+
+    instagram_posts = fetch_instagram_posts(
+        urls,
+        facebook_access_token=config.facebook_access_token,
+    )
+    instagram_signal = analyze_instagram(instagram_posts)
 
     async with DerivClient(config.ws_url, config.api_token) as client:
         if client.account is None:
@@ -132,6 +196,7 @@ async def generate_advice_report(config: Config) -> AdviceReport:
         news=news_sentiment,
         trades=trades,
         min_confidence=config.min_confidence,
+        instagram=instagram_signal,
     )
 
     return AdviceReport(
@@ -143,4 +208,10 @@ async def generate_advice_report(config: Config) -> AdviceReport:
         trades=trades,
         suggestions=suggestions,
         min_confidence=config.min_confidence,
+        instagram=instagram_signal,
+        instagram_posts=instagram_posts,
     )
+
+
+def parse_instagram_input(text: str) -> list[str]:
+    return extract_instagram_urls(text)

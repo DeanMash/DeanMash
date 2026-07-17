@@ -97,11 +97,13 @@ body {
 }
 
 .token-field input,
+.token-field textarea,
 button {
   font: inherit;
 }
 
-.token-field input {
+.token-field input,
+.token-field textarea {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -112,9 +114,20 @@ button {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.token-field input:focus {
+.token-field textarea {
+  resize: vertical;
+  min-height: 5rem;
+  line-height: 1.4;
+}
+
+.token-field input:focus,
+.token-field textarea:focus {
   border-color: rgba(11, 110, 106, 0.55);
   box-shadow: 0 0 0 3px rgba(11, 110, 106, 0.15);
+}
+
+.ig-field {
+  grid-column: 1 / -1;
 }
 
 button {
@@ -289,6 +302,10 @@ button:disabled {
   .controls {
     grid-template-columns: 1fr auto;
     align-items: end;
+  }
+
+  .ig-field {
+    grid-column: 1 / -1;
   }
 
   button {

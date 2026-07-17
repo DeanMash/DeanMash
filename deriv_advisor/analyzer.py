@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from .deriv_client import TickSeries
+from .instagram_client import InstagramPost
 from .news_client import NewsItem
 
 
@@ -25,6 +27,13 @@ BULLISH_WORDS = {
     "upbeat",
     "jump",
     "jumps",
+    "buy",
+    "long",
+    "call",
+    "calls",
+    "boom",
+    "higher",
+    "breakout",
 }
 
 BEARISH_WORDS = {
@@ -49,6 +58,36 @@ BEARISH_WORDS = {
     "inflation",
     "war",
     "tariff",
+    "sell",
+    "short",
+    "put",
+    "puts",
+    "crash",
+    "lower",
+    "breakdown",
+}
+
+SYMBOL_ALIASES = {
+    "r_100": "R_100",
+    "r100": "R_100",
+    "volatility 100": "R_100",
+    "vol 100": "R_100",
+    "r_75": "R_75",
+    "r75": "R_75",
+    "volatility 75": "R_75",
+    "vol 75": "R_75",
+    "r_50": "R_50",
+    "r50": "R_50",
+    "volatility 50": "R_50",
+    "vol 50": "R_50",
+    "r_25": "R_25",
+    "r25": "R_25",
+    "volatility 25": "R_25",
+    "vol 25": "R_25",
+    "r_10": "R_10",
+    "r10": "R_10",
+    "volatility 10": "R_10",
+    "vol 10": "R_10",
 }
 
 
@@ -69,6 +108,95 @@ class NewsSentiment:
     headline_count: int
     sample_titles: list[str]
     summary: str
+
+
+@dataclass
+class InstagramSignal:
+    score: float  # -1.0 to +1.0
+    direction_hint: str  # CALL / PUT / HOLD
+    matched_symbols: list[str]
+    post_count: int
+    fetched_count: int
+    sample_captions: list[str]
+    summary: str
+
+
+def _detect_symbols(text: str) -> list[str]:
+    lowered = text.lower()
+    matched: list[str] = []
+    for alias, symbol in SYMBOL_ALIASES.items():
+        if alias in lowered and symbol not in matched:
+            matched.append(symbol)
+    # Also catch explicit R_100-style tokens.
+    for token in re.findall(r"\br[_\s-]?(\d{2,3})\b", lowered):
+        symbol = f"R_{token}"
+        if symbol in {"R_100", "R_75", "R_50", "R_25", "R_10"} and symbol not in matched:
+            matched.append(symbol)
+    return matched
+
+
+def analyze_instagram(posts: list[InstagramPost]) -> InstagramSignal:
+    if not posts:
+        return InstagramSignal(
+            score=0.0,
+            direction_hint="HOLD",
+            matched_symbols=[],
+            post_count=0,
+            fetched_count=0,
+            sample_captions=[],
+            summary="No Instagram links provided.",
+        )
+
+    fetched = [p for p in posts if p.fetched and p.caption.strip()]
+    if not fetched:
+        notes = "; ".join(sorted({p.note for p in posts if p.note})) or "no caption text"
+        return InstagramSignal(
+            score=0.0,
+            direction_hint="HOLD",
+            matched_symbols=[],
+            post_count=len(posts),
+            fetched_count=0,
+            sample_captions=[],
+            summary=f"Instagram links received but captions were unavailable ({notes}).",
+        )
+
+    score = 0.0
+    symbols: list[str] = []
+    samples: list[str] = []
+    for post in fetched:
+        text = post.caption.lower()
+        words = set(re.findall(r"[a-z0-9_]+", text))
+        bull = len(words & BULLISH_WORDS)
+        bear = len(words & BEARISH_WORDS)
+        score += bull - bear
+        for symbol in _detect_symbols(post.caption):
+            if symbol not in symbols:
+                symbols.append(symbol)
+        samples.append(post.caption[:140])
+
+    norm = max(-1.0, min(1.0, score / max(4.0, len(fetched) * 1.5)))
+    if norm > 0.2:
+        direction = "CALL"
+        summary = "Instagram captions lean bullish/CALL."
+    elif norm < -0.2:
+        direction = "PUT"
+        summary = "Instagram captions lean bearish/PUT."
+    else:
+        direction = "HOLD"
+        summary = "Instagram captions are mixed/neutral."
+
+    if symbols:
+        summary += f" Mentioned: {', '.join(symbols)}."
+
+    return InstagramSignal(
+        score=round(norm, 3),
+        direction_hint=direction,
+        matched_symbols=symbols,
+        post_count=len(posts),
+        fetched_count=len(fetched),
+        sample_captions=samples[:5],
+        summary=summary,
+    )
 
 
 def _sma(values: list[float], window: int) -> float:

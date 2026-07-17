@@ -45,6 +45,21 @@ python -m deriv_advisor telegram
 4. Message your bot → `/chatid` → set `TELEGRAM_ALLOWED_CHAT_IDS`
 5. Send `/suggest` from your phone
 
+## Instagram links
+
+Paste public Instagram **post/reel** links in:
+
+- Web dashboard → **Instagram links** box → **Get suggestions**
+- Telegram → paste a link, or `/suggest https://www.instagram.com/reel/...`
+
+The system reads available caption/link-preview text and uses it as a **small confidence nudge** (not the main trade trigger).
+
+Notes:
+
+- Public posts work best. Private/login-walled posts often expose no caption.
+- For more reliable captions, add a Facebook app token as `FACEBOOK_ACCESS_TOKEN` (Instagram oEmbed).
+- Reel audio/video is not transcribed yet — caption text only for now.
+
 ## What it uses
 
 | Input | Source |
@@ -52,7 +67,8 @@ python -m deriv_advisor telegram
 | Account balance + recent trades | Deriv WebSocket API |
 | Live tick history | Deriv `ticks_history` |
 | News headlines | Free RSS feeds (optional NewsAPI key) |
-| Signals | RSI, SMA crossover, short-term momentum + light news/history nudges |
+| Instagram captions | Pasted post/reel links (OG preview or oEmbed) |
+| Signals | RSI, SMA crossover, short-term momentum + news/Instagram/history nudges |
 
 ## Setup
 
@@ -92,8 +108,11 @@ python -m deriv_advisor -v web
 | --- | --- |
 | `/start` | Help / welcome |
 | `/suggest` | Analyze and send ideas |
+| `/suggest <instagram link>` | Analyze with Instagram caption tone |
 | `/ideas` | Same as `/suggest` |
 | `/chatid` | Show your Telegram chat id |
+
+Paste a bare Instagram link in chat to run analysis with that post/reel.
 
 ## Output
 

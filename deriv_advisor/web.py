@@ -9,12 +9,19 @@ import uvicorn
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 
 from .config import Config, load_config
+from .instagram_client import extract_instagram_urls
 from .service import generate_advice_report
 
 logger = logging.getLogger(__name__)
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+
+class SuggestionRequest(BaseModel):
+    instagram_urls: list[str] = Field(default_factory=list)
+    instagram_text: str = ""
 
 
 def _configure_logging(verbose: bool) -> None:
@@ -37,6 +44,31 @@ def _check_dashboard_access(
     provided = header_token or query_token
     if provided != config.dashboard_token:
         raise HTTPException(status_code=401, detail="Invalid or missing dashboard token")
+
+
+def _collect_instagram_urls(
+    *,
+    urls: list[str] | None = None,
+    text: str = "",
+    query_csv: str | None = None,
+) -> list[str]:
+    collected: list[str] = []
+    for url in urls or []:
+        collected.extend(extract_instagram_urls(url))
+    if text:
+        collected.extend(extract_instagram_urls(text))
+    if query_csv:
+        collected.extend(extract_instagram_urls(query_csv.replace(",", " ")))
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for url in collected:
+        key = url.rstrip("/").lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(url)
+    return deduped
 
 
 def create_app(config: Config | None = None) -> FastAPI:
@@ -62,11 +94,36 @@ def create_app(config: Config | None = None) -> FastAPI:
             "auth_required": bool(config.dashboard_token),
             "symbols": config.symbols,
             "min_confidence": config.min_confidence,
+            "instagram_enabled": True,
         }
 
     @app.get("/api/suggestions")
-    async def suggestions(
+    async def suggestions_get(
         request: Request,
+        token: str | None = Query(default=None),
+        instagram: str | None = Query(default=None),
+        x_dashboard_token: str | None = Header(default=None),
+    ) -> dict:
+        _check_dashboard_access(
+            request.app.state.config,
+            header_token=x_dashboard_token,
+            query_token=token,
+        )
+        urls = _collect_instagram_urls(query_csv=instagram)
+        try:
+            report = await generate_advice_report(
+                request.app.state.config,
+                instagram_urls=urls,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Dashboard suggestion request failed")
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+        return report.to_dict()
+
+    @app.post("/api/suggestions")
+    async def suggestions_post(
+        request: Request,
+        body: SuggestionRequest,
         token: str | None = Query(default=None),
         x_dashboard_token: str | None = Header(default=None),
     ) -> dict:
@@ -75,8 +132,12 @@ def create_app(config: Config | None = None) -> FastAPI:
             header_token=x_dashboard_token,
             query_token=token,
         )
+        urls = _collect_instagram_urls(urls=body.instagram_urls, text=body.instagram_text)
         try:
-            report = await generate_advice_report(request.app.state.config)
+            report = await generate_advice_report(
+                request.app.state.config,
+                instagram_urls=urls,
+            )
         except Exception as exc:  # noqa: BLE001
             logger.exception("Dashboard suggestion request failed")
             raise HTTPException(status_code=502, detail=str(exc)) from exc
@@ -106,6 +167,7 @@ def main(argv: list[str] | None = None) -> int:
     print("Deriv Trade Advisor dashboard (suggestions only)")
     print(f"Open on this machine: http://127.0.0.1:{port}")
     print(f"On your phone (same Wi‑Fi): http://<this-computer-ip>:{port}")
+    print("Paste Instagram post/reel links in the dashboard before Get suggestions.")
     if config.dashboard_token:
         print("DASHBOARD_TOKEN is set — include it in the UI access field or ?token=")
     else:

@@ -5,6 +5,8 @@ from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
+from .instagram_client import extract_instagram_urls
+
 
 @dataclass(frozen=True)
 class Config:
@@ -20,6 +22,8 @@ class Config:
     dashboard_host: str
     dashboard_port: int
     dashboard_token: str | None
+    facebook_access_token: str | None
+    instagram_urls: list[str]
 
 
 def load_config() -> Config:
@@ -45,6 +49,8 @@ def load_config() -> Config:
     dashboard_host = os.getenv("DASHBOARD_HOST", "0.0.0.0").strip() or "0.0.0.0"
     dashboard_port = int(os.getenv("DASHBOARD_PORT", "8000"))
     dashboard_token = os.getenv("DASHBOARD_TOKEN", "").strip() or None
+    facebook_access_token = os.getenv("FACEBOOK_ACCESS_TOKEN", "").strip() or None
+    instagram_urls = extract_instagram_urls(os.getenv("INSTAGRAM_URLS", ""))
 
     if not api_token:
         raise ValueError(
@@ -69,4 +75,6 @@ def load_config() -> Config:
         dashboard_host=dashboard_host,
         dashboard_port=dashboard_port,
         dashboard_token=dashboard_token,
+        facebook_access_token=facebook_access_token,
+        instagram_urls=instagram_urls,
     )
