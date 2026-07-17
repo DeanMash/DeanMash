@@ -15,6 +15,8 @@ class Config:
     min_confidence: float
     news_api_key: str | None
     ws_url: str
+    telegram_bot_token: str | None
+    telegram_allowed_chat_ids: set[int]
 
 
 def load_config() -> Config:
@@ -27,6 +29,15 @@ def load_config() -> Config:
     tick_count = int(os.getenv("TICK_COUNT", "200"))
     min_confidence = float(os.getenv("MIN_CONFIDENCE", "55"))
     news_api_key = os.getenv("NEWS_API_KEY", "").strip() or None
+    telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip() or None
+    chat_ids_raw = os.getenv("TELEGRAM_ALLOWED_CHAT_IDS", "").strip()
+    telegram_allowed_chat_ids: set[int] = set()
+    if chat_ids_raw:
+        for part in chat_ids_raw.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            telegram_allowed_chat_ids.add(int(part))
 
     if not api_token:
         raise ValueError(
@@ -46,4 +57,6 @@ def load_config() -> Config:
         min_confidence=min_confidence,
         news_api_key=news_api_key,
         ws_url=f"wss://ws.derivws.com/websockets/v3?app_id={app_id}",
+        telegram_bot_token=telegram_bot_token,
+        telegram_allowed_chat_ids=telegram_allowed_chat_ids,
     )
