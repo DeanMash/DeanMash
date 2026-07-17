@@ -34,6 +34,7 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command")
     sub.add_parser("cli", help="Run one-shot CLI suggestions (default)")
     sub.add_parser("telegram", help="Run the Telegram bot for phone access")
+    sub.add_parser("web", help="Run the web dashboard for browser/phone access")
     args = parser.parse_args(argv)
 
     if args.command == "telegram":
@@ -41,6 +42,12 @@ def main(argv: list[str] | None = None) -> int:
 
         telegram_argv = ["-v"] if args.verbose else []
         return telegram_main(telegram_argv)
+
+    if args.command == "web":
+        from .web import main as web_main
+
+        web_argv = ["-v"] if args.verbose else []
+        return web_main(web_argv)
 
     try:
         return asyncio.run(run_once(verbose=args.verbose))

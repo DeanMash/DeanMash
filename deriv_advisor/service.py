@@ -66,6 +66,47 @@ class AdviceReport:
         )
         return "\n".join(lines)
 
+    def to_dict(self) -> dict:
+        return {
+            "generated_at": self.generated_at.strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "min_confidence": self.min_confidence,
+            "account": {
+                "loginid": self.account.loginid,
+                "currency": self.account.currency,
+                "balance": self.account.balance,
+                "is_virtual": self.account.is_virtual,
+                "type": "DEMO" if self.account.is_virtual else "REAL",
+            },
+            "news": {
+                "score": self.news.score,
+                "headline_count": self.news.headline_count,
+                "summary": self.news.summary,
+                "sample_titles": self.news.sample_titles,
+            },
+            "suggestions": [
+                {
+                    "symbol": s.symbol,
+                    "direction": s.direction,
+                    "confidence": s.confidence,
+                    "last_price": s.last_price,
+                    "reasons": s.reasons,
+                    "news_adjustment": s.news_adjustment,
+                }
+                for s in self.suggestions
+            ],
+            "technicals": [
+                {
+                    "symbol": t.symbol,
+                    "direction": t.direction,
+                    "confidence": t.confidence,
+                    "last_price": t.last_price,
+                    "rsi": t.rsi,
+                    "momentum_pct": t.momentum_pct,
+                }
+                for t in self.technicals
+            ],
+        }
+
 
 async def generate_advice_report(config: Config) -> AdviceReport:
     news_items = fetch_news(config.news_api_key, max_items=20)

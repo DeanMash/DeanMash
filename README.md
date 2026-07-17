@@ -4,33 +4,46 @@ Python tool that connects to your **Deriv** account, reads recent market ticks a
 
 It does **not** place trades.
 
-## Phone access (Telegram)
+## Phone / browser access
 
-Best way to use this from your phone:
+You can use either:
 
-1. The bot process runs on a computer / always-on machine / VPS
-2. You open Telegram on your phone and send `/suggest`
-3. Suggestions come back as chat messages
+1. **Web dashboard** — open in your phone browser
+2. **Telegram bot** — get suggestions as chat messages
 
-### Telegram setup
+Both need the Python process running on a computer / VPS.
 
-1. In Telegram, talk to [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token
+### Web dashboard
+
+```bash
+python -m deriv_advisor web
+```
+
+Then open:
+
+- This computer: `http://127.0.0.1:8000`
+- Phone on the same Wi‑Fi: `http://<your-computer-ip>:8000`
+
+Optional lock in `.env`:
+
+```env
+DASHBOARD_TOKEN=pick-a-secret
+```
+
+Enter that secret in the dashboard **Access token** field before clicking **Get suggestions**.
+
+### Telegram bot
+
+1. Talk to [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token
 2. Put it in `.env` as `TELEGRAM_BOT_TOKEN=...`
-3. Start the bot:
+3. Start:
 
 ```bash
 python -m deriv_advisor telegram
 ```
 
-4. Message your bot → `/chatid` → copy the number into `.env`:
-
-```env
-TELEGRAM_ALLOWED_CHAT_IDS=123456789
-```
-
-5. Restart the bot, then send `/suggest` from your phone
-
-Keep the bot process running while you want phone access.
+4. Message your bot → `/chatid` → set `TELEGRAM_ALLOWED_CHAT_IDS`
+5. Send `/suggest` from your phone
 
 ## What it uses
 
@@ -55,30 +68,22 @@ Edit `.env`:
 1. Create an app / note an `app_id` at [developers.deriv.com](https://developers.deriv.com/)
 2. Create an API token in your Deriv account (read access is enough)
 3. Put both values in `.env`
-4. (Phone) add Telegram bot token + allowed chat id
+4. Optional: Telegram + dashboard token settings
 
 Recommended: use a **demo** Deriv token while testing.
 
 ## Run
 
-One-shot CLI:
-
 ```bash
-python -m deriv_advisor
+python -m deriv_advisor            # one-shot CLI
+python -m deriv_advisor web        # web dashboard
+python -m deriv_advisor telegram   # Telegram bot
 ```
 
-Telegram bot (phone):
+Verbose:
 
 ```bash
-python -m deriv_advisor telegram
-# or: python -m deriv_advisor.telegram_bot
-```
-
-Verbose logs:
-
-```bash
-python -m deriv_advisor -v
-python -m deriv_advisor -v telegram
+python -m deriv_advisor -v web
 ```
 
 ## Bot commands
@@ -110,9 +115,9 @@ pytest -q
 
 - Suggestions are heuristics, not financial advice.
 - Synthetic indices are not driven by news the way FX/stocks are; news only applies a small confidence nudge.
-- Lock the bot with `TELEGRAM_ALLOWED_CHAT_IDS` so strangers cannot use your Deriv connection.
+- Set `DASHBOARD_TOKEN` and `TELEGRAM_ALLOWED_CHAT_IDS` so strangers cannot use your Deriv connection.
 - Keep auto-trading off until you have reviewed many suggestion cycles on demo.
 
 ## Next step (later)
 
-Optional: small web dashboard, scheduled Telegram alerts, or gated auto-trade with hard risk limits.
+Optional: scheduled alerts, or gated auto-trade with hard risk limits.

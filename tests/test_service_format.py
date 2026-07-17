@@ -54,3 +54,8 @@ def test_advice_report_to_text_includes_suggestion():
     assert "VRTC123" in text
     assert "R_100 → CALL" in text
     assert "72.5%" in text
+
+    payload = report.to_dict()
+    assert payload["account"]["loginid"] == "VRTC123"
+    assert payload["suggestions"][0]["direction"] == "CALL"
+    assert payload["suggestions"][0]["confidence"] == 72.5

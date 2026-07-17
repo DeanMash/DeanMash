@@ -17,6 +17,9 @@ class Config:
     ws_url: str
     telegram_bot_token: str | None
     telegram_allowed_chat_ids: set[int]
+    dashboard_host: str
+    dashboard_port: int
+    dashboard_token: str | None
 
 
 def load_config() -> Config:
@@ -39,6 +42,10 @@ def load_config() -> Config:
                 continue
             telegram_allowed_chat_ids.add(int(part))
 
+    dashboard_host = os.getenv("DASHBOARD_HOST", "0.0.0.0").strip() or "0.0.0.0"
+    dashboard_port = int(os.getenv("DASHBOARD_PORT", "8000"))
+    dashboard_token = os.getenv("DASHBOARD_TOKEN", "").strip() or None
+
     if not api_token:
         raise ValueError(
             "DERIV_API_TOKEN is missing. Copy .env.example to .env and add your "
@@ -59,4 +66,7 @@ def load_config() -> Config:
         ws_url=f"wss://ws.derivws.com/websockets/v3?app_id={app_id}",
         telegram_bot_token=telegram_bot_token,
         telegram_allowed_chat_ids=telegram_allowed_chat_ids,
+        dashboard_host=dashboard_host,
+        dashboard_port=dashboard_port,
+        dashboard_token=dashboard_token,
     )
