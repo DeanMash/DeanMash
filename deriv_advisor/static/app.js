@@ -138,7 +138,11 @@ async function loadSuggestions() {
       );
     }
     renderReport(payload);
-    setStatus(`Updated ${payload.generated_at}`);
+    setStatus(
+      payload.cache_hit
+        ? `Updated ${payload.generated_at} (cached)`
+        : `Updated ${payload.generated_at}`
+    );
   } catch (err) {
     setStatus(err.message || "Failed to load suggestions", true);
   } finally {
