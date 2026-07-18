@@ -115,10 +115,18 @@ Recommended: use a **demo** Deriv token while testing.
 
 ```bash
 python -m deriv_advisor            # one-shot CLI
-python -m deriv_advisor web        # web dashboard
+python -m deriv_advisor web        # web dashboard (live Deriv)
+python -m deriv_advisor web --demo # sample UI with no Deriv token
 python -m deriv_advisor telegram   # Telegram bot
 ```
 
+### Demo (no API token)
+
+```bash
+python -m deriv_advisor web --demo
+```
+
+Open `http://127.0.0.1:8000` and click **Get suggestions** to see sample ideas.
 Verbose:
 
 ```bash

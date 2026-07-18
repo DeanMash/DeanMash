@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .config import Config, load_config
+from .demo_data import build_demo_report, demo_config
 from .instagram_client import extract_instagram_urls
 from .service import generate_advice_report
 
@@ -71,10 +72,21 @@ def _collect_instagram_urls(
     return deduped
 
 
-def create_app(config: Config | None = None) -> FastAPI:
-    config = config or load_config()
+async def _build_report(request: Request, urls: list[str]):
+    if request.app.state.demo_mode:
+        return build_demo_report(instagram_urls=urls)
+    return await generate_advice_report(request.app.state.config, instagram_urls=urls)
+
+
+def create_app(config: Config | None = None, *, demo_mode: bool = False) -> FastAPI:
+    if demo_mode:
+        config = config or demo_config()
+    else:
+        config = config or load_config()
+
     app = FastAPI(title="Deriv Trade Advisor", docs_url=None, redoc_url=None)
     app.state.config = config
+    app.state.demo_mode = demo_mode
 
     if STATIC_DIR.exists():
         app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -90,7 +102,7 @@ def create_app(config: Config | None = None) -> FastAPI:
     async def health() -> dict:
         return {
             "ok": True,
-            "mode": "suggestions_only",
+            "mode": "demo" if demo_mode else "suggestions_only",
             "auth_required": bool(config.dashboard_token),
             "symbols": config.symbols,
             "min_confidence": config.min_confidence,
@@ -111,10 +123,7 @@ def create_app(config: Config | None = None) -> FastAPI:
         )
         urls = _collect_instagram_urls(query_csv=instagram)
         try:
-            report = await generate_advice_report(
-                request.app.state.config,
-                instagram_urls=urls,
-            )
+            report = await _build_report(request, urls)
         except Exception as exc:  # noqa: BLE001
             logger.exception("Dashboard suggestion request failed")
             raise HTTPException(status_code=502, detail=str(exc)) from exc
@@ -134,10 +143,7 @@ def create_app(config: Config | None = None) -> FastAPI:
         )
         urls = _collect_instagram_urls(urls=body.instagram_urls, text=body.instagram_text)
         try:
-            report = await generate_advice_report(
-                request.app.state.config,
-                instagram_urls=urls,
-            )
+            report = await _build_report(request, urls)
         except Exception as exc:  # noqa: BLE001
             logger.exception("Dashboard suggestion request failed")
             raise HTTPException(status_code=502, detail=str(exc)) from exc
@@ -149,15 +155,28 @@ def create_app(config: Config | None = None) -> FastAPI:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Web dashboard for Deriv trade suggestions.")
     parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("--demo", action="store_true", help="Run with sample data (no Deriv token)")
     parser.add_argument("--host", default=None, help="Override DASHBOARD_HOST")
     parser.add_argument("--port", type=int, default=None, help="Override DASHBOARD_PORT")
     args = parser.parse_args(argv)
     _configure_logging(args.verbose)
 
+    if args.demo:
+        config = demo_config()
+        app = create_app(config, demo_mode=True)
+        host = args.host or config.dashboard_host
+        port = args.port or config.dashboard_port
+        print("Deriv Trade Advisor — DEMO MODE (sample data, no live Deriv calls)")
+        print(f"Open: http://127.0.0.1:{port}")
+        print("Click Get suggestions to see sample CALL/PUT ideas.")
+        uvicorn.run(app, host=host, port=port, log_level="debug" if args.verbose else "info")
+        return 0
+
     try:
         config = load_config()
     except Exception as exc:  # noqa: BLE001
         print(f"Error: {exc}", file=sys.stderr)
+        print("Tip: run a sample UI with: python -m deriv_advisor web --demo", file=sys.stderr)
         return 1
 
     host = args.host or config.dashboard_host
