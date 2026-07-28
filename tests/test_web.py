@@ -52,8 +52,9 @@ def test_suggestions_require_token(monkeypatch):
 def test_suggestions_post_passes_instagram_urls(monkeypatch):
     captured = {}
 
-    async def fake_report(config, *, instagram_urls=None):
+    async def fake_report(config, *, instagram_urls=None, symbols=None):
         captured["urls"] = instagram_urls or []
+        captured["symbols"] = symbols
         from datetime import datetime, timezone
 
         from deriv_advisor.analyzer import InstagramSignal, NewsSentiment

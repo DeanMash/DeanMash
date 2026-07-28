@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from .config import Config, load_config
 from .demo_data import build_demo_report, demo_config
 from .instagram_client import extract_instagram_urls
+from .markets import DEFAULT_SYMBOLS, INDEX_DISPLAY_NAMES, normalize_symbols
 from .service import generate_advice_report
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,8 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 class SuggestionRequest(BaseModel):
     instagram_urls: list[str] = Field(default_factory=list)
     instagram_text: str = ""
+    symbols: list[str] = Field(default_factory=list)
+    symbols_text: str = ""
 
 
 def _configure_logging(verbose: bool) -> None:
@@ -72,10 +75,14 @@ def _collect_instagram_urls(
     return deduped
 
 
-async def _build_report(request: Request, urls: list[str]):
+async def _build_report(request: Request, urls: list[str], symbols: list[str] | None = None):
     if request.app.state.demo_mode:
-        return build_demo_report(instagram_urls=urls)
-    return await generate_advice_report(request.app.state.config, instagram_urls=urls)
+        return build_demo_report(instagram_urls=urls, symbols=symbols)
+    return await generate_advice_report(
+        request.app.state.config,
+        instagram_urls=urls,
+        symbols=symbols,
+    )
 
 
 def create_app(config: Config | None = None, *, demo_mode: bool = False) -> FastAPI:
@@ -107,6 +114,11 @@ def create_app(config: Config | None = None, *, demo_mode: bool = False) -> Fast
             "symbols": config.symbols,
             "min_confidence": config.min_confidence,
             "instagram_enabled": True,
+            "available_indices": [
+                {"symbol": symbol, "display_name": name}
+                for symbol, name in INDEX_DISPLAY_NAMES.items()
+            ],
+            "default_symbols": DEFAULT_SYMBOLS,
         }
 
     @app.get("/api/suggestions")
@@ -114,6 +126,7 @@ def create_app(config: Config | None = None, *, demo_mode: bool = False) -> Fast
         request: Request,
         token: str | None = Query(default=None),
         instagram: str | None = Query(default=None),
+        symbols: str | None = Query(default=None),
         x_dashboard_token: str | None = Header(default=None),
     ) -> dict:
         _check_dashboard_access(
@@ -122,8 +135,9 @@ def create_app(config: Config | None = None, *, demo_mode: bool = False) -> Fast
             query_token=token,
         )
         urls = _collect_instagram_urls(query_csv=instagram)
+        watchlist = normalize_symbols(symbols) if symbols else None
         try:
-            report = await _build_report(request, urls)
+            report = await _build_report(request, urls, symbols=watchlist)
         except Exception as exc:  # noqa: BLE001
             logger.exception("Dashboard suggestion request failed")
             raise HTTPException(status_code=502, detail=str(exc)) from exc
@@ -142,8 +156,13 @@ def create_app(config: Config | None = None, *, demo_mode: bool = False) -> Fast
             query_token=token,
         )
         urls = _collect_instagram_urls(urls=body.instagram_urls, text=body.instagram_text)
+        watchlist = normalize_symbols(body.symbols or body.symbols_text)
         try:
-            report = await _build_report(request, urls)
+            report = await _build_report(
+                request,
+                urls,
+                symbols=watchlist or None,
+            )
         except Exception as exc:  # noqa: BLE001
             logger.exception("Dashboard suggestion request failed")
             raise HTTPException(status_code=502, detail=str(exc)) from exc

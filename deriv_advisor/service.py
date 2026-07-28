@@ -17,6 +17,7 @@ from .cache import news_cache, report_cache, ticks_cache, trades_cache
 from .config import Config
 from .deriv_client import AccountInfo, DerivClient, StatementTrade, TickSeries
 from .instagram_client import InstagramPost, extract_instagram_urls, fetch_instagram_posts
+from .markets import display_name
 from .news_client import NewsItem, fetch_news
 from .suggester import TradeSuggestion, build_suggestions
 
@@ -72,6 +73,14 @@ class AdviceReport:
         lines.append(f"• {self.instagram.summary}")
         for caption in self.instagram.sample_captions[: 2 if compact else 4]:
             lines.append(f"  - {caption}")
+
+        lines.append("")
+        lines.append("Markets watched")
+        for tech in self.technicals:
+            lines.append(
+                f"• {display_name(tech.symbol)} ({tech.symbol}) → {tech.direction} "
+                f"| {tech.confidence:.1f}% | last {tech.last_price}"
+            )
 
         lines.append("")
         lines.append(f"Suggestions (min {self.min_confidence:g}%)")
@@ -138,6 +147,7 @@ class AdviceReport:
             "suggestions": [
                 {
                     "symbol": s.symbol,
+                    "display_name": display_name(s.symbol),
                     "direction": s.direction,
                     "confidence": s.confidence,
                     "last_price": s.last_price,
@@ -147,14 +157,29 @@ class AdviceReport:
                 }
                 for s in self.suggestions
             ],
-            "technicals": [
+            "markets": [
                 {
                     "symbol": t.symbol,
+                    "display_name": display_name(t.symbol),
                     "direction": t.direction,
                     "confidence": t.confidence,
                     "last_price": t.last_price,
                     "rsi": t.rsi,
                     "momentum_pct": t.momentum_pct,
+                    "reasons": t.reasons,
+                }
+                for t in self.technicals
+            ],
+            "technicals": [
+                {
+                    "symbol": t.symbol,
+                    "display_name": display_name(t.symbol),
+                    "direction": t.direction,
+                    "confidence": t.confidence,
+                    "last_price": t.last_price,
+                    "rsi": t.rsi,
+                    "momentum_pct": t.momentum_pct,
+                    "reasons": t.reasons,
                 }
                 for t in self.technicals
             ],
@@ -227,14 +252,24 @@ async def generate_advice_report(
     config: Config,
     *,
     instagram_urls: list[str] | None = None,
+    symbols: list[str] | None = None,
     bypass_cache: bool = False,
 ) -> AdviceReport:
+    from dataclasses import replace
+
+    from .markets import normalize_symbols
+
     urls = list(instagram_urls or [])
     for url in config.instagram_urls:
         if url not in urls:
             urls.append(url)
 
-    cache_key = _report_cache_key(config, urls)
+    watchlist = normalize_symbols(symbols) if symbols else list(config.symbols)
+    if not watchlist:
+        watchlist = list(config.symbols)
+    runtime_config = replace(config, symbols=watchlist)
+
+    cache_key = _report_cache_key(runtime_config, urls)
     if not bypass_cache:
         cached_report = report_cache.get(cache_key)
         if cached_report is not None:
@@ -242,7 +277,7 @@ async def generate_advice_report(
             logger.info("Advice report cache hit")
             return cached_report
 
-    news_items = _get_news_items(config)
+    news_items = _get_news_items(runtime_config)
     news_sentiment = analyze_news(news_items)
 
     # Instagram is fetched only when links exist — keeps normal runs fast.
@@ -250,20 +285,23 @@ async def generate_advice_report(
         instagram_posts = await asyncio.to_thread(
             fetch_instagram_posts,
             urls,
-            config.facebook_access_token,
+            runtime_config.facebook_access_token,
         )
     else:
         instagram_posts = []
     instagram_signal = analyze_instagram(instagram_posts)
 
-    async with DerivClient(config.ws_url, config.api_token) as client:
+    async with DerivClient(runtime_config.ws_url, runtime_config.api_token) as client:
         if client.account is None:
             raise RuntimeError("Deriv account was not authorized")
         account = client.account
-        trades = await _get_trades(client, config)
+        trades = await _get_trades(client, runtime_config)
 
         results = await asyncio.gather(
-            *[_analyze_symbol(client, config, symbol) for symbol in config.symbols]
+            *[
+                _analyze_symbol(client, runtime_config, symbol)
+                for symbol in runtime_config.symbols
+            ]
         )
         technicals = [signal for signal in results if signal is not None]
 
@@ -271,7 +309,7 @@ async def generate_advice_report(
         technicals=technicals,
         news=news_sentiment,
         trades=trades,
-        min_confidence=config.min_confidence,
+        min_confidence=runtime_config.min_confidence,
         instagram=instagram_signal,
     )
 
@@ -283,12 +321,12 @@ async def generate_advice_report(
         technicals=technicals,
         trades=trades,
         suggestions=suggestions,
-        min_confidence=config.min_confidence,
+        min_confidence=runtime_config.min_confidence,
         cache_hit=False,
         instagram=instagram_signal,
         instagram_posts=instagram_posts,
     )
-    report_cache.set(cache_key, report, config.cache_ttl_seconds)
+    report_cache.set(cache_key, report, runtime_config.cache_ttl_seconds)
     return report
 
 

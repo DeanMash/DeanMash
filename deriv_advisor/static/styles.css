@@ -130,6 +130,35 @@ button {
   grid-column: 1 / -1;
 }
 
+.symbol-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.55rem;
+}
+
+.symbol-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.symbol-chip input {
+  accent-color: var(--accent);
+}
+
+.badge.hold {
+  background: var(--hold);
+}
+
 button {
   border: 0;
   border-radius: 12px;

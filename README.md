@@ -83,6 +83,18 @@ Notes:
 - For more reliable captions, add a Facebook app token as `FACEBOOK_ACCESS_TOKEN` (Instagram oEmbed).
 - Reel audio/video is not transcribed yet — caption text only for now.
 
+### Indices / markets
+
+The dashboard now shows **All watched indices** (CALL / PUT / HOLD) plus **Top ideas**.
+
+Pick indices in the UI, or set them in `.env`:
+
+```env
+DERIV_SYMBOLS=R_75,R_100,BOOM1000,CRASH1000,JD50,1HZ75V
+```
+
+Common codes: `R_10`…`R_100`, `1HZ75V`, `BOOM1000`, `CRASH1000`, `JD10`…`JD100`.
+
 ## What it uses
 
 | Input | Source |

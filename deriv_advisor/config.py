@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from dotenv import load_dotenv
 
 from .instagram_client import extract_instagram_urls
+from .markets import DEFAULT_SYMBOLS, normalize_symbols
 
 
 @dataclass(frozen=True)
@@ -36,8 +37,8 @@ def load_config() -> Config:
 
     app_id = os.getenv("DERIV_APP_ID", "1089").strip()
     api_token = os.getenv("DERIV_API_TOKEN", "").strip()
-    symbols_raw = os.getenv("DERIV_SYMBOLS", "R_100,R_75,R_50,R_25,R_10")
-    symbols = [s.strip() for s in symbols_raw.split(",") if s.strip()]
+    symbols_raw = os.getenv("DERIV_SYMBOLS", ",".join(DEFAULT_SYMBOLS))
+    symbols = normalize_symbols(symbols_raw)
     tick_count = int(os.getenv("TICK_COUNT", "200"))
     min_confidence = float(os.getenv("MIN_CONFIDENCE", "55"))
     news_api_key = os.getenv("NEWS_API_KEY", "").strip() or None
