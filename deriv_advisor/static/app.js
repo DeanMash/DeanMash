@@ -234,7 +234,15 @@ async function loadSuggestions() {
         : `Updated ${payload.generated_at}`
     );
   } catch (err) {
-    setStatus(err.message || "Failed to load suggestions", true);
+    const raw = String(err && err.message ? err.message : err);
+    if (/failed to fetch|networkerror|load failed/i.test(raw)) {
+      setStatus(
+        "Failed to fetch: dashboard server is not reachable. Keep the PowerShell window running and open http://127.0.0.1:8000 (not a file:// page).",
+        true
+      );
+    } else {
+      setStatus(raw || "Failed to load suggestions", true);
+    }
   } finally {
     refreshBtn.disabled = false;
   }
