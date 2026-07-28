@@ -43,6 +43,7 @@ def test_advice_report_to_text_includes_suggestion():
                 last_price=1234.5,
                 reasons=["Positive momentum", "News: mixed"],
                 news_adjustment=0.5,
+                instagram_adjustment=1.5,
                 trade_history_note="No recent personal trades found.",
             )
         ],

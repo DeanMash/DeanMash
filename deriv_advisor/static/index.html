@@ -19,7 +19,7 @@
         <p class="brand">Deriv Trade Advisor</p>
         <h1>Suggestions only</h1>
         <p class="lede">
-          Pull live ticks, news tone, and your recent Deriv activity — then review ranked ideas.
+          Watch your Deriv indices, pull news + Instagram captions, then review ranked ideas.
           Nothing is traded for you.
         </p>
         <div class="controls">
@@ -29,8 +29,25 @@
               id="tokenInput"
               type="password"
               autocomplete="off"
-              placeholder="Required if DASHBOARD_TOKEN is set"
+              placeholder="Leave blank unless DASHBOARD_TOKEN is set"
             />
+          </label>
+          <label class="token-field ig-field">
+            <span>Indices to watch</span>
+            <div id="symbolPicker" class="symbol-picker"></div>
+            <textarea
+              id="symbolsInput"
+              rows="2"
+              placeholder="Or type codes: R_75, BOOM1000, CRASH1000, JD50"
+            ></textarea>
+          </label>
+          <label class="token-field ig-field">
+            <span>Instagram links</span>
+            <textarea
+              id="instagramInput"
+              rows="3"
+              placeholder="Paste one or more Instagram post/reel links"
+            ></textarea>
           </label>
           <button id="refreshBtn" type="button">Get suggestions</button>
         </div>
@@ -42,14 +59,26 @@
         <p id="accountLine" class="panel-body"></p>
       </section>
 
+      <section class="panel" id="marketsPanel" hidden>
+        <h2>All watched indices</h2>
+        <p id="marketsSummary" class="panel-body"></p>
+        <div id="marketsList" class="ideas"></div>
+      </section>
+
       <section class="panel" id="newsPanel" hidden>
         <h2>News tone</h2>
         <p id="newsSummary" class="panel-body"></p>
         <ul id="newsList" class="news-list"></ul>
       </section>
 
+      <section class="panel" id="instagramPanel" hidden>
+        <h2>Instagram</h2>
+        <p id="instagramSummary" class="panel-body"></p>
+        <ul id="instagramList" class="news-list"></ul>
+      </section>
+
       <section class="panel" id="suggestionsPanel" hidden>
-        <h2>Ideas</h2>
+        <h2>Top ideas</h2>
         <div id="suggestionsList" class="ideas"></div>
       </section>
 

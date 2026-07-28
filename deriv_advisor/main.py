@@ -34,7 +34,14 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command")
     sub.add_parser("cli", help="Run one-shot CLI suggestions (default)")
     sub.add_parser("telegram", help="Run the Telegram bot for phone access")
-    sub.add_parser("web", help="Run the web dashboard for browser/phone access")
+    web_parser = sub.add_parser("web", help="Run the web dashboard for browser/phone access")
+    web_parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="Run with sample data (no Deriv API token required)",
+    )
+    web_parser.add_argument("--host", default=None)
+    web_parser.add_argument("--port", type=int, default=None)
     args = parser.parse_args(argv)
 
     if args.command == "telegram":
@@ -46,7 +53,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "web":
         from .web import main as web_main
 
-        web_argv = ["-v"] if args.verbose else []
+        web_argv: list[str] = []
+        if args.verbose:
+            web_argv.append("-v")
+        if args.demo:
+            web_argv.append("--demo")
+        if args.host:
+            web_argv.extend(["--host", args.host])
+        if args.port is not None:
+            web_argv.extend(["--port", str(args.port)])
         return web_main(web_argv)
 
     try:

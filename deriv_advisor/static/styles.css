@@ -97,11 +97,13 @@ body {
 }
 
 .token-field input,
+.token-field textarea,
 button {
   font: inherit;
 }
 
-.token-field input {
+.token-field input,
+.token-field textarea {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -112,9 +114,49 @@ button {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.token-field input:focus {
+.token-field textarea {
+  resize: vertical;
+  min-height: 5rem;
+  line-height: 1.4;
+}
+
+.token-field input:focus,
+.token-field textarea:focus {
   border-color: rgba(11, 110, 106, 0.55);
   box-shadow: 0 0 0 3px rgba(11, 110, 106, 0.15);
+}
+
+.ig-field {
+  grid-column: 1 / -1;
+}
+
+.symbol-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.55rem;
+}
+
+.symbol-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.symbol-chip input {
+  accent-color: var(--accent);
+}
+
+.badge.hold {
+  background: var(--hold);
 }
 
 button {
@@ -289,6 +331,10 @@ button:disabled {
   .controls {
     grid-template-columns: 1fr auto;
     align-items: end;
+  }
+
+  .ig-field {
+    grid-column: 1 / -1;
   }
 
   button {

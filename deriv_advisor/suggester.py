@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .analyzer import NewsSentiment, TechnicalSignal
+from .analyzer import InstagramSignal, NewsSentiment, TechnicalSignal
 from .deriv_client import StatementTrade
 
 
@@ -14,6 +14,7 @@ class TradeSuggestion:
     last_price: float
     reasons: list[str]
     news_adjustment: float
+    instagram_adjustment: float
     trade_history_note: str
 
 
@@ -44,13 +45,51 @@ def _trade_history_bias(trades: list[StatementTrade], symbol: str) -> tuple[floa
     return 0.0, f"Recent settled win rate {win_rate:.0%} ({wins}/{settled}) — no adjustment."
 
 
+def _instagram_nudge(signal: TechnicalSignal, instagram: InstagramSignal) -> tuple[float, str]:
+    if instagram.post_count == 0:
+        return 0.0, "Instagram: no links provided."
+    if instagram.fetched_count == 0:
+        return 0.0, f"Instagram: {instagram.summary}"
+
+    # Base nudge from caption tone.
+    nudge = instagram.score * 8.0
+
+    # Extra weight when the caption names this symbol.
+    if instagram.matched_symbols and signal.symbol in instagram.matched_symbols:
+        if instagram.direction_hint == signal.direction:
+            nudge += 4.0
+        elif instagram.direction_hint in {"CALL", "PUT"} and instagram.direction_hint != signal.direction:
+            nudge -= 4.0
+
+    # Align / conflict with technical direction.
+    if instagram.direction_hint == signal.direction:
+        applied = abs(nudge)
+    elif instagram.direction_hint == "HOLD":
+        applied = nudge * 0.35
+    else:
+        applied = -abs(nudge)
+
+    note = f"Instagram: {instagram.summary} (adj {applied:+.1f})"
+    return applied, note
+
+
 def build_suggestions(
     technicals: list[TechnicalSignal],
     news: NewsSentiment,
     trades: list[StatementTrade],
     min_confidence: float,
+    instagram: InstagramSignal | None = None,
 ) -> list[TradeSuggestion]:
     suggestions: list[TradeSuggestion] = []
+    instagram = instagram or InstagramSignal(
+        score=0.0,
+        direction_hint="HOLD",
+        matched_symbols=[],
+        post_count=0,
+        fetched_count=0,
+        sample_captions=[],
+        summary="No Instagram links provided.",
+    )
 
     # News is more relevant for FX/commodities than pure synthetics, so keep the nudge small.
     news_nudge = news.score * 6.0
@@ -60,6 +99,7 @@ def build_suggestions(
             continue
 
         hist_nudge, hist_note = _trade_history_bias(trades, signal.symbol)
+        ig_nudge, ig_note = _instagram_nudge(signal, instagram)
         adjusted = signal.confidence
 
         if signal.direction == "CALL":
@@ -68,10 +108,12 @@ def build_suggestions(
             adjusted -= news_nudge
 
         adjusted += hist_nudge
+        adjusted += ig_nudge
         adjusted = max(0.0, min(95.0, adjusted))
 
         reasons = list(signal.reasons)
         reasons.append(f"News: {news.summary} (score {news.score:+.2f})")
+        reasons.append(ig_note)
         reasons.append(hist_note)
 
         if adjusted < min_confidence:
@@ -85,6 +127,7 @@ def build_suggestions(
                 last_price=signal.last_price,
                 reasons=reasons,
                 news_adjustment=round(news_nudge if signal.direction == "CALL" else -news_nudge, 2),
+                instagram_adjustment=round(ig_nudge, 2),
                 trade_history_note=hist_note,
             )
         )

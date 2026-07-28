@@ -5,6 +5,9 @@ from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
+from .instagram_client import extract_instagram_urls
+from .markets import DEFAULT_SYMBOLS, normalize_symbols
+
 
 @dataclass(frozen=True)
 class Config:
@@ -20,6 +23,13 @@ class Config:
     dashboard_host: str
     dashboard_port: int
     dashboard_token: str | None
+    facebook_access_token: str | None
+    instagram_urls: list[str]
+    cache_ttl_seconds: int
+    alert_enabled: bool
+    alert_interval_minutes: int
+    alert_min_confidence: float
+    alert_cooldown_minutes: int
 
 
 def load_config() -> Config:
@@ -27,8 +37,8 @@ def load_config() -> Config:
 
     app_id = os.getenv("DERIV_APP_ID", "1089").strip()
     api_token = os.getenv("DERIV_API_TOKEN", "").strip()
-    symbols_raw = os.getenv("DERIV_SYMBOLS", "R_100,R_75,R_50,R_25,R_10")
-    symbols = [s.strip() for s in symbols_raw.split(",") if s.strip()]
+    symbols_raw = os.getenv("DERIV_SYMBOLS", ",".join(DEFAULT_SYMBOLS))
+    symbols = normalize_symbols(symbols_raw)
     tick_count = int(os.getenv("TICK_COUNT", "200"))
     min_confidence = float(os.getenv("MIN_CONFIDENCE", "55"))
     news_api_key = os.getenv("NEWS_API_KEY", "").strip() or None
@@ -45,6 +55,18 @@ def load_config() -> Config:
     dashboard_host = os.getenv("DASHBOARD_HOST", "0.0.0.0").strip() or "0.0.0.0"
     dashboard_port = int(os.getenv("DASHBOARD_PORT", "8000"))
     dashboard_token = os.getenv("DASHBOARD_TOKEN", "").strip() or None
+    facebook_access_token = os.getenv("FACEBOOK_ACCESS_TOKEN", "").strip() or None
+    instagram_urls = extract_instagram_urls(os.getenv("INSTAGRAM_URLS", ""))
+    cache_ttl_seconds = int(os.getenv("CACHE_TTL_SECONDS", "45"))
+    alert_enabled = os.getenv("ALERT_ENABLED", "true").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    alert_interval_minutes = int(os.getenv("ALERT_INTERVAL_MINUTES", "15"))
+    alert_min_confidence = float(os.getenv("ALERT_MIN_CONFIDENCE", "70"))
+    alert_cooldown_minutes = int(os.getenv("ALERT_COOLDOWN_MINUTES", "30"))
 
     if not api_token:
         raise ValueError(
@@ -55,6 +77,12 @@ def load_config() -> Config:
         raise ValueError("DERIV_SYMBOLS must include at least one symbol.")
     if tick_count < 50:
         raise ValueError("TICK_COUNT should be at least 50 for meaningful signals.")
+    if cache_ttl_seconds < 0:
+        raise ValueError("CACHE_TTL_SECONDS cannot be negative.")
+    if alert_interval_minutes < 1:
+        raise ValueError("ALERT_INTERVAL_MINUTES must be at least 1.")
+    if alert_cooldown_minutes < 0:
+        raise ValueError("ALERT_COOLDOWN_MINUTES cannot be negative.")
 
     return Config(
         app_id=app_id,
@@ -69,4 +97,11 @@ def load_config() -> Config:
         dashboard_host=dashboard_host,
         dashboard_port=dashboard_port,
         dashboard_token=dashboard_token,
+        facebook_access_token=facebook_access_token,
+        instagram_urls=instagram_urls,
+        cache_ttl_seconds=cache_ttl_seconds,
+        alert_enabled=alert_enabled,
+        alert_interval_minutes=alert_interval_minutes,
+        alert_min_confidence=alert_min_confidence,
+        alert_cooldown_minutes=alert_cooldown_minutes,
     )
