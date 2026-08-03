@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — {{ business.name }}{% endblock %}
+{% block content %}
+{% if request.query_params.get('ran') %}
+<div class="flash">Ran follow-ups — {{ request.query_params.get('ran') }} message(s) sent/logged.</div>
+{% endif %}
+
+<section style="padding: 0.5rem 0 1rem;">
+  <div style="display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; align-items:end;">
+    <div>
+      <div class="muted tiny">{{ trade.emoji }} {{ trade.label }} · {{ business.plan_key|capitalize }} plan</div>
+      <h1 style="margin:0.2rem 0; letter-spacing:-0.02em;">{{ business.name }}</h1>
+      <p class="muted" style="margin:0;">Owner {{ business.owner_name }} · automating Day 2 / 5 / 10 chases</p>
+    </div>
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+      <form method="post" action="/run-followups">
+        <button class="btn btn-secondary" type="submit">Run due follow-ups now</button>
+      </form>
+      <a class="btn btn-primary" href="/estimates/new">+ Log estimate</a>
+    </div>
+  </div>
+</section>
+
+<section class="grid-4" style="margin-bottom:1rem;">
+  <div class="stat-card">
+    <div class="label">Open pipeline</div>
+    <div class="value">{{ stats.open_value | money }}</div>
+    <div class="muted tiny">{{ stats.open_count }} active estimates</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Won revenue</div>
+    <div class="value">{{ stats.won_value | money }}</div>
+    <div class="muted tiny">{{ stats.won_count }} jobs closed</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Close rate</div>
+    <div class="value">{{ '%.0f'|format(stats.close_rate) }}%</div>
+    <div class="muted tiny">{{ stats.lost_count }} lost · follow-up protects this</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Due today</div>
+    <div class="value">{{ stats.due_today }}</div>
+    <div class="muted tiny">{{ stats.calls_due }} call script(s) ready</div>
+  </div>
+</section>
+
+<section class="grid-2">
+  <div class="card card-pad">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2 style="margin:0; font-size:1.25rem;">Estimates</h2>
+      <span class="muted tiny">Quoted → chased → won</span>
+    </div>
+    <div class="table-wrap" style="margin-top:0.8rem;">
+      <table>
+        <thead>
+          <tr>
+            <th>Homeowner</th>
+            <th>Amount</th>
+            <th>Quoted</th>
+            <th>Next</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in estimates %}
+          <tr>
+            <td>
+              <a href="/estimates/{{ e.id }}"><strong>{{ e.homeowner_name }}</strong></a>
+              <div class="muted tiny">{{ e.address }}</div>
+              <div class="muted tiny">{{ e.job_title }}</div>
+            </td>
+            <td>{{ e.amount | money }}</td>
+            <td>{{ e.quoted_on | datefmt }}</td>
+            <td>
+              {% if e.status == 'open' and e.next_follow_up_on %}
+                {{ e.next_follow_up_on | datefmt }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td><span class="badge badge-{{ e.status }}">{{ e.status }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="muted">No estimates yet. <a href="/estimates/new">Log your first quote</a>.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="display:grid; gap:1rem;">
+    <div class="card card-pad">
+      <h2 style="margin:0 0 0.6rem; font-size:1.25rem;">Call scripts due</h2>
+      {% for fu in call_scripts %}
+        <div style="margin-bottom:0.9rem;">
+          <div style="display:flex; justify-content:space-between; gap:0.5rem;">
+            <strong>Day {{ fu.day }} · {{ fu.estimate.homeowner_name }}</strong>
+            <span class="muted tiny">{{ fu.scheduled_for | datefmt }}</span>
+          </div>
+          <div class="call-box">{{ fu.body }}</div>
+          <a class="btn btn-ghost btn-sm" href="/estimates/{{ fu.estimate.id }}">Open estimate</a>
+        </div>
+      {% else %}
+        <p class="muted">No call scripts due. Keep logging quotes after every site visit.</p>
+      {% endfor %}
+    </div>
+
+    <div class="card card-pad">
+      <h2 style="margin:0 0 0.6rem; font-size:1.25rem;">Recent outbound</h2>
+      {% for m in messages %}
+        <div style="padding:0.55rem 0; border-bottom:1px solid var(--line);">
+          <div style="display:flex; justify-content:space-between; gap:0.5rem;">
+            <strong class="tiny">{{ m.channel|upper }} · {{ m.provider_status }}</strong>
+            <span class="muted tiny">#{{ m.estimate_id }}</span>
+          </div>
+          <div class="muted tiny">{{ m.to_address }}</div>
+          <div class="tiny">{{ m.body[:140] }}{% if m.body|length > 140 %}…{% endif %}</div>
+        </div>
+      {% else %}
+        <p class="muted">No messages yet. Click <em>Run due follow-ups now</em> to process Day 2/5/10 SMS & email.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

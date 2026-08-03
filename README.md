@@ -1,123 +1,100 @@
-# Deriv Trade Advisor (suggestions only)
+# CloseLoop
 
-Python tool that connects to your **Deriv** account, reads recent market ticks and trade history, pulls public financial news, then produces **trade suggestions with confidence scores**.
+**The follow-up system for contractors who already earned the job — then lost it to silence.**
 
-It does **not** place trades.
+A contractor drives to a homeowner’s house, spends 45 minutes quoting, sends the estimate… and never follows up. The homeowner goes with whoever calls back.
 
-## Phone / browser access
+CloseLoop schedules **Day 2**, **Day 5**, and **Day 10** SMS, email, and call scripts automatically so roofers, painters, landscapers, construction crews, and related trades close more of the jobs they already quoted.
 
-You can use either:
+## Who it’s for
 
-1. **Web dashboard** — open in your phone browser
-2. **Telegram bot** — get suggestions as chat messages
-
-Both need the Python process running on a computer / VPS.
-
-### Web dashboard
-
-```bash
-python -m deriv_advisor web
-```
-
-Then open:
-
-- This computer: `http://127.0.0.1:8000`
-- Phone on the same Wi‑Fi: `http://<your-computer-ip>:8000`
-
-Optional lock in `.env`:
-
-```env
-DASHBOARD_TOKEN=pick-a-secret
-```
-
-Enter that secret in the dashboard **Access token** field before clicking **Get suggestions**.
-
-### Telegram bot
-
-1. Talk to [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token
-2. Put it in `.env` as `TELEGRAM_BOT_TOKEN=...`
-3. Start:
-
-```bash
-python -m deriv_advisor telegram
-```
-
-4. Message your bot → `/chatid` → set `TELEGRAM_ALLOWED_CHAT_IDS`
-5. Send `/suggest` from your phone
-
-## What it uses
-
-| Input | Source |
+| Trade | Why follow-up wins |
 | --- | --- |
-| Account balance + recent trades | Deriv WebSocket API |
-| Live tick history | Deriv `ticks_history` |
-| News headlines | Free RSS feeds (optional NewsAPI key) |
-| Signals | RSI, SMA crossover, short-term momentum + light news/history nudges |
+| Roofing | 3 bids → first persistent callback often wins |
+| Painting | Protects margin vs cheap silent competitors |
+| Landscaping | Seasonal windows close fast |
+| General construction | Long cycles die without a chase |
+| HVAC / Plumbing / Electrical | Urgency fades unless someone checks in |
+| Flooring · Concrete · Windows · Fencing · Remodeling · Pest | Vertical playbooks included |
 
-## Setup
+## Pricing ($500 – $1,500 / mo)
+
+| Plan | Price | Best for |
+| --- | --- | --- |
+| **Starter** | **$500/mo** | Solo operators, ~50 open estimates, 1 trade playbook |
+| **Growth** | **$997/mo** | Crews closing harder — 3 trades, 200 estimates, reports |
+| **Scale** | **$1,500/mo** | Multi-crew shops — unlimited, custom sequences, onboarding |
+
+One saved mid-ticket roof or remodel pays for months of software.
+
+## Features
+
+- Log an estimate in ~30 seconds after the site visit
+- Auto Day **2 / 5 / 10** sequences (SMS + email)
+- Day 5 & Day 10 **call scripts** on the dashboard
+- Trade-specific copy (not generic CRM spam)
+- Mark **won / lost / paused** — pending follow-ups stop
+- Pipeline value, close rate, and outbound message log
+- Optional Twilio SMS + SMTP email (logs only until configured)
+
+## Quick start
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
+python -m closeloop web
 ```
+
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000)
+
+- Marketing + pricing: `/`
+- Onboard a company: `/onboard`
+- Ops dashboard: `/dashboard`
+- Log a quote: `/estimates/new`
+
+Demo data (Summit Shield Roofing) seeds automatically when `SEED_DEMO=true`.
+
+### Process due follow-ups once (CLI)
+
+```bash
+python -m closeloop run-followups
+```
+
+The web app also runs this on a 15-minute scheduler, and the dashboard has a **Run due follow-ups now** button.
+
+## Configure real SMS / email
 
 Edit `.env`:
 
-1. Create an app / note an `app_id` at [developers.deriv.com](https://developers.deriv.com/)
-2. Create an API token in your Deriv account (read access is enough)
-3. Put both values in `.env`
-4. Optional: Telegram + dashboard token settings
+```env
+TWILIO_ACCOUNT_SID=...
+TWILIO_AUTH_TOKEN=...
+TWILIO_FROM_NUMBER=+1...
 
-Recommended: use a **demo** Deriv token while testing.
-
-## Run
-
-```bash
-python -m deriv_advisor            # one-shot CLI
-python -m deriv_advisor web        # web dashboard
-python -m deriv_advisor telegram   # Telegram bot
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=...
+SMTP_PASSWORD=...
+SMTP_FROM=followups@yourdomain.com
 ```
 
-Verbose:
-
-```bash
-python -m deriv_advisor -v web
-```
-
-## Bot commands
-
-| Command | Action |
-| --- | --- |
-| `/start` | Help / welcome |
-| `/suggest` | Analyze and send ideas |
-| `/ideas` | Same as `/suggest` |
-| `/chatid` | Show your Telegram chat id |
-
-## Output
-
-- Account snapshot (demo/real, balance)
-- News tone summary + sample headlines
-- Ranked suggestions like `R_100 → CALL | confidence 72.5%`
-- Reasons for each suggestion
-
-Only ideas above `MIN_CONFIDENCE` (default `55`) are shown.
+Without these, messages are **logged** (safe for demos) instead of sent.
 
 ## Tests
 
 ```bash
-pip install pytest
+pip install -r requirements.txt
 pytest -q
 ```
 
-## Important
+## Product story (pitch)
 
-- Suggestions are heuristics, not financial advice.
-- Synthetic indices are not driven by news the way FX/stocks are; news only applies a small confidence nudge.
-- Set `DASHBOARD_TOKEN` and `TELEGRAM_ALLOWED_CHAT_IDS` so strangers cannot use your Deriv connection.
-- Keep auto-trading off until you have reviewed many suggestion cycles on demo.
+> You already did the hard part — drove out, measured, earned trust, sent the number.
+> CloseLoop makes sure you’re the contractor who calls back on Day 2, Day 5, and Day 10
+> so the job doesn’t quietly walk to someone else.
 
-## Next step (later)
+## Note on this repo
 
-Optional: scheduled alerts, or gated auto-trade with hard risk limits.
+This repository also contains an older `deriv_advisor` experiment. **CloseLoop** (`closeloop/`) is the active product.

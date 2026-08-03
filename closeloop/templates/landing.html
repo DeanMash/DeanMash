@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} — Never lose a quoted job to silence{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <div class="pill-row">
+      <span class="pill">Built for roofers · painters · landscapers · construction</span>
+      <span class="pill">Day 2 / 5 / 10 chase</span>
+    </div>
+    <h1>You already spent 45 minutes quoting. Don’t let silence lose the job.</h1>
+    <p class="lead">
+      Contractors drive out, write the estimate, hit send… then never follow up.
+      Homeowners go with whoever calls back. {{ app_name }} runs the chase for you —
+      SMS, email, and call scripts at Day 2, Day 5, and Day 10 — until the job is won or closed.
+    </p>
+    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+      {% if has_business %}
+        <a class="btn btn-primary" href="/dashboard">Open dashboard</a>
+      {% else %}
+        <a class="btn btn-primary" href="/onboard">Start closing more jobs</a>
+      {% endif %}
+      <a class="btn btn-secondary" href="#pricing">See $500–$1,500 plans</a>
+    </div>
+  </div>
+  <div class="card hero-card">
+    <h3>The CloseLoop cadence</h3>
+    <ul class="timeline">
+      <li>
+        <div class="day-badge">Day 0</div>
+        <div>
+          <strong>Estimate sent</strong>
+          <div class="muted tiny">After the site visit — log it in 30 seconds.</div>
+        </div>
+      </li>
+      <li>
+        <div class="day-badge">Day 2</div>
+        <div>
+          <strong>Soft check-in</strong>
+          <div class="muted tiny">“Did you get the quote?” SMS + email. No pressure.</div>
+        </div>
+      </li>
+      <li>
+        <div class="day-badge">Day 5</div>
+        <div>
+          <strong>Value + urgency</strong>
+          <div class="muted tiny">Crew windows, materials, call script to handle objections.</div>
+        </div>
+      </li>
+      <li>
+        <div class="day-badge">Day 10</div>
+        <div>
+          <strong>Decision close</strong>
+          <div class="muted tiny">YES / HOLD / NO — book it or free your pipeline.</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="trades">
+  <h2>Playbooks for the trades that live on estimates</h2>
+  <p class="sub">Each vertical ships with proven SMS, email, and phone scripts — not generic CRM spam.</p>
+  <div class="grid-4">
+    {% for t in trades %}
+    <div class="trade-card">
+      <div class="trade-emoji">{{ t.emoji }}</div>
+      <h3>{{ t.label }}</h3>
+      <div class="muted tiny">Typical ticket {{ t.avg_ticket }}</div>
+      <p class="tiny" style="margin:0.55rem 0 0;">{{ t.pain_point }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section" id="how">
+  <h2>How crews use it on Monday morning</h2>
+  <p class="sub">No new CRM religion. Log the quote you already sent — we handle the awkward follow-ups.</p>
+  <div class="grid-3">
+    <div class="card card-pad">
+      <h3>1. Capture the quote</h3>
+      <p class="muted">Homeowner, address, amount, trade. Quoted date starts the Day 2/5/10 clock.</p>
+    </div>
+    <div class="card card-pad">
+      <h3>2. Auto-chase</h3>
+      <p class="muted">SMS + email go out on schedule. Day 5 & 10 call scripts appear on your dashboard.</p>
+    </div>
+    <div class="card card-pad">
+      <h3>3. Mark won / lost</h3>
+      <p class="muted">When they book — or ghost — close the file. Pending follow-ups stop automatically.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="pricing">
+  <h2>Pricing that pays for itself on one saved roof</h2>
+  <p class="sub">Flat monthly. Built for owner-operators through multi-crew shops. $500 → $1,500.</p>
+  <div class="grid-3">
+    {% for tier in tiers %}
+    <div class="price-card {% if tier.highlighted %}highlight{% endif %}">
+      <div class="muted tiny">{{ tier.name }}</div>
+      <div class="price">{{ tier.price_label }}</div>
+      <p class="tiny muted">{{ tier.blurb }}</p>
+      <ul>
+        {% for f in tier.features %}
+        <li>{{ f }}</li>
+        {% endfor %}
+      </ul>
+      <a class="btn {% if tier.highlighted %}btn-primary{% else %}btn-secondary{% endif %}" href="/onboard?plan={{ tier.key }}">
+        Choose {{ tier.name }}
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

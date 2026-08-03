@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Onboard — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:1rem;">
+  <h2>Set up your company</h2>
+  <p class="sub">Takes under two minutes. We’ll load the right Day 2 / 5 / 10 playbook for your trade.</p>
+  <div class="card card-pad" style="max-width:720px;">
+    <form class="form" method="post" action="/onboard">
+      <div class="form-row">
+        <label>Company name
+          <input name="name" required placeholder="Summit Shield Roofing" />
+        </label>
+        <label>Your name
+          <input name="owner_name" required placeholder="Marcus Hill" />
+        </label>
+      </div>
+      <div class="form-row">
+        <label>Company phone
+          <input name="phone" placeholder="(555) 014-2200" />
+        </label>
+        <label>Email
+          <input name="email" type="email" placeholder="you@company.com" />
+        </label>
+      </div>
+      <div class="form-row">
+        <label>Primary trade
+          <select name="trade_key">
+            {% for t in trades %}
+            <option value="{{ t.key }}">{{ t.emoji }} {{ t.label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Plan
+          <select name="plan_key">
+            {% for tier in tiers %}
+            <option value="{{ tier.key }}" {% if tier.highlighted %}selected{% endif %}>
+              {{ tier.name }} — {{ tier.price_label }}
+            </option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+      <button class="btn btn-primary" type="submit">Launch my follow-up system</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

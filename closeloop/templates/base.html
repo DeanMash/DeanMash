@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <nav class="nav">
+      <a class="brand" href="/">
+        <span class="brand-mark">CL</span>
+        <span>{{ app_name }}</span>
+      </a>
+      <div class="nav-links">
+        <a class="btn btn-ghost btn-sm" href="/#how">How it works</a>
+        <a class="btn btn-ghost btn-sm" href="/#pricing">Pricing</a>
+        <a class="btn btn-secondary btn-sm" href="/dashboard">Dashboard</a>
+        <a class="btn btn-primary btn-sm" href="/estimates/new">+ New estimate</a>
+      </div>
+    </nav>
+    {% block content %}{% endblock %}
+    <footer class="footer">
+      <strong>{{ app_name }}</strong> closes jobs contractors already quoted —
+      Day 2, Day 5, and Day 10 follow-ups so the homeowner doesn’t ghost you for whoever calls back.
+    </footer>
+  </div>
+</body>
+</html>
