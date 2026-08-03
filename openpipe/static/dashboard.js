@@ -1,0 +1,177 @@
+(() => {
+  const tokenInput = document.getElementById("token");
+  const bizName = document.getElementById("biz-name");
+  const bizMeta = document.getElementById("biz-meta");
+  const statsEl = document.getElementById("stats");
+  const prospectsBody = document.getElementById("prospects-body");
+  const messagesEl = document.getElementById("messages");
+  const eventsEl = document.getElementById("events");
+  const previewEl = document.getElementById("preview");
+  const addForm = document.getElementById("add-prospect");
+
+  function headers() {
+    const h = { "Content-Type": "application/json" };
+    const t = tokenInput.value.trim();
+    if (t) h["X-Openpipe-Token"] = t;
+    return h;
+  }
+
+  async function api(path, opts = {}) {
+    const res = await fetch(path, {
+      ...opts,
+      headers: { ...headers(), ...(opts.headers || {}) },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || res.statusText);
+    }
+    return res.json();
+  }
+
+  function statCard(label, value) {
+    return `<div class="stat"><div class="label">${label}</div><div class="value">${value}</div></div>`;
+  }
+
+  async function preview(prospectId, day = 0) {
+    const data = await api(`/api/preview?prospect_id=${encodeURIComponent(prospectId)}&day=${day}`);
+    previewEl.innerHTML = `
+      <h3>Email preview · Day ${data.day}</h3>
+      <p class="msg-meta">To ${data.to}</p>
+      <p><strong>${data.subject}</strong></p>
+      <pre>${data.body}</pre>
+      <div class="actions" style="margin-top:0.5rem">
+        <button type="button" data-day="0">Day 0</button>
+        <button type="button" data-day="3">Day 3</button>
+        <button type="button" data-day="7">Day 7</button>
+      </div>`;
+    previewEl.querySelectorAll("button[data-day]").forEach((btn) => {
+      btn.addEventListener("click", () => preview(prospectId, Number(btn.dataset.day)));
+    });
+  }
+
+  async function refresh() {
+    const [biz, stats, prospects, messages, events] = await Promise.all([
+      api("/api/business"),
+      api("/api/stats"),
+      api("/api/prospects"),
+      api("/api/messages"),
+      api("/api/events"),
+    ]);
+
+    bizName.textContent = biz.name;
+    bizMeta.textContent = `${biz.vertical} · ${biz.city} · ${biz.sender_name} · ${biz.plan} plan · niche: ${biz.niche || "—"}`;
+
+    statsEl.innerHTML = [
+      statCard("Prospects", stats.prospects),
+      statCard("Sequenced", stats.sequenced),
+      statCard("Replied", stats.replied),
+      statCard("Meetings", stats.meetings),
+      statCard("Sent", stats.messages_sent),
+      statCard("Queued", stats.messages_queued),
+      statCard("Reply %", stats.reply_rate),
+    ].join("");
+
+    prospectsBody.innerHTML = prospects
+      .map(
+        (p) => `
+      <tr>
+        <td>
+          <strong>${p.full_name}</strong><br />
+          <span class="msg-meta">${p.title || "—"} · ${p.email}</span>
+        </td>
+        <td>${p.company}<br /><span class="msg-meta">${p.trigger || ""}</span></td>
+        <td><span class="status ${p.status}">${p.status}</span></td>
+        <td>
+          <div class="actions">
+            <button type="button" data-preview="${p.id}">Preview</button>
+            <button type="button" data-replied="${p.id}">Replied</button>
+            <button type="button" data-meeting="${p.id}">Meeting</button>
+          </div>
+        </td>
+      </tr>`
+      )
+      .join("");
+
+    prospectsBody.querySelectorAll("[data-preview]").forEach((btn) => {
+      btn.addEventListener("click", () => preview(btn.dataset.preview, 0));
+    });
+    prospectsBody.querySelectorAll("[data-replied]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await api("/api/replied", {
+          method: "POST",
+          body: JSON.stringify({ prospect_id: btn.dataset.replied }),
+        });
+        refresh();
+      });
+    });
+    prospectsBody.querySelectorAll("[data-meeting]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await api("/api/meeting", {
+          method: "POST",
+          body: JSON.stringify({ prospect_id: btn.dataset.meeting }),
+        });
+        refresh();
+      });
+    });
+
+    messagesEl.innerHTML = messages.length
+      ? messages
+          .slice(0, 40)
+          .map(
+            (m) => `
+        <div class="msg-item">
+          <strong>Day ${m.day} · ${m.status}</strong>
+          <div>${m.subject}</div>
+          <div class="msg-meta">${m.scheduled_for}${m.sent_at ? " · sent " + m.sent_at : ""}</div>
+        </div>`
+          )
+          .join("")
+      : "<p class='tiny'>No messages yet.</p>";
+
+    eventsEl.innerHTML = events.length
+      ? events
+          .slice(0, 25)
+          .map(
+            (e) => `
+        <div class="event-item">
+          <strong>${e.kind}</strong>
+          <div class="event-meta">${e.created_at}</div>
+          <div class="msg-meta">${JSON.stringify(e.payload)}</div>
+        </div>`
+          )
+          .join("")
+      : "<p class='tiny'>No activity yet.</p>";
+  }
+
+  document.getElementById("btn-refresh").addEventListener("click", () => refresh().catch(alert));
+  document.getElementById("btn-plan").addEventListener("click", async () => {
+    await api("/api/plan", { method: "POST", body: "{}" });
+    await refresh();
+  });
+  document.getElementById("btn-run").addEventListener("click", async () => {
+    const result = await api("/api/run", { method: "POST", body: "{}" });
+    alert(`Sent ${result.sent} · failed ${result.failed} · checked ${result.checked}`);
+    await refresh();
+  });
+  document.getElementById("btn-discover").addEventListener("click", async () => {
+    const result = await api("/api/discover", {
+      method: "POST",
+      body: JSON.stringify({ limit: 6 }),
+    });
+    alert(`Added ${result.added} prospects · planned ${result.messages_planned} emails`);
+    await refresh();
+  });
+
+  addForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(addForm).entries());
+    await api("/api/prospects", { method: "POST", body: JSON.stringify(data) });
+    addForm.reset();
+    await refresh();
+  });
+
+  refresh().catch((err) => {
+    bizName.textContent = "Could not load dashboard";
+    bizMeta.textContent = String(err.message || err);
+  });
+})();

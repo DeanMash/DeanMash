@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenPipe Operator Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/dashboard.css" />
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="/">Open<span>Pipe</span></a>
+      <div class="top-actions">
+        <input class="token" id="token" type="password" placeholder="Access token (optional)" />
+        <button class="btn secondary" id="btn-refresh" type="button">Refresh</button>
+        <button class="btn secondary" id="btn-discover" type="button">Find prospects</button>
+        <button class="btn" id="btn-plan" type="button">Rebuild plan</button>
+        <button class="btn signal" id="btn-run" type="button">Send due emails</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="biz-line">
+        <div>
+          <h1 id="biz-name">Loading…</h1>
+          <p id="biz-meta"></p>
+        </div>
+        <p class="tiny">
+          Demo mode logs sends — no live email until credentials are connected.
+        </p>
+      </div>
+
+      <section class="stats" id="stats"></section>
+
+      <div class="grid">
+        <section class="panel">
+          <h2>Prospects</h2>
+          <form class="form-row" id="add-prospect">
+            <input name="full_name" required placeholder="Full name" />
+            <input name="email" type="email" required placeholder="email@company.com" />
+            <input name="company" placeholder="Company" />
+            <input name="title" placeholder="Title" />
+            <input name="trigger" placeholder="Trigger signal" />
+            <button class="btn" type="submit">Add &amp; sequence</button>
+          </form>
+          <div style="overflow-x: auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Prospect</th>
+                  <th>Company</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="prospects-body"></tbody>
+            </table>
+          </div>
+          <div class="preview-box" id="preview">
+            <h3>Email preview</h3>
+            <p>Select Preview on a prospect to see Day 0 / 3 / 7 copy.</p>
+          </div>
+        </section>
+
+        <div>
+          <section class="panel" style="margin-bottom: 1.25rem">
+            <h2>Outbound queue</h2>
+            <div id="messages"></div>
+          </section>
+          <section class="panel">
+            <h2>Activity</h2>
+            <div id="events"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script src="/static/dashboard.js"></script>
+  </body>
+</html>
