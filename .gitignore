@@ -9,3 +9,6 @@ __pycache__/
 .DS_Store
 dist/
 build/
+# Deskline
+deskline/node_modules/
+deskline/dist/
