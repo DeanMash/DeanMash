@@ -107,14 +107,20 @@ async function loadAll() {
     .join("") || "<p class='tiny'>No activity yet.</p>";
 }
 
+const previewDays = [30, 60, 90];
+const previewDayByClient = new Map();
+
 document.getElementById("clients-body").addEventListener("click", async (e) => {
   const previewId = e.target.getAttribute("data-preview");
   const recoverId = e.target.getAttribute("data-recover");
   if (previewId) {
-    const day = prompt("Preview which day? 30, 60, or 90", "30") || "30";
+    const idx = previewDayByClient.get(previewId) || 0;
+    const day = previewDays[idx % previewDays.length];
+    previewDayByClient.set(previewId, idx + 1);
     const data = await api(`/api/preview?client_id=${previewId}&day=${day}`);
     document.getElementById("preview").innerHTML = `
       <h3>Day ${data.day} · ${data.channel} → ${data.to}</h3>
+      <p class="tiny" style="color:#cde8dc;margin:0 0 0.5rem">Click Preview again for day 60 / 90</p>
       <p><strong>${data.subject}</strong></p>
       <p>${data.body}</p>`;
   }

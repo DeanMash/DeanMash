@@ -391,20 +391,26 @@ a {
 .plan {
   padding: 1.75rem 1.4rem;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.72);
   border-radius: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
 }
 
 .plan.featured {
-  background: var(--ink);
-  color: var(--foam);
-  border-color: transparent;
+  background: linear-gradient(180deg, #eff7f3 0%, #ffffff 55%);
+  border: 2px solid var(--leaf);
+  box-shadow: var(--shadow);
   transform: translateY(-6px);
 }
 
-.plan.featured .muted,
-.plan.featured li {
-  color: rgba(247, 251, 248, 0.78);
+.plan.featured .price {
+  color: var(--leaf);
+}
+
+.plan .btn {
+  margin-top: auto;
 }
 
 .plan h3 {
@@ -552,6 +558,15 @@ textarea {
 
   .nav-links .hide-mobile {
     display: none;
+  }
+
+  .nav-links {
+    gap: 0.55rem;
+  }
+
+  .nav-links .btn {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.85rem;
   }
 
   .hero-content {
