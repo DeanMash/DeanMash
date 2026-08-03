@@ -1,0 +1,233 @@
+.page {
+  min-height: 100vh;
+  padding: 1.25rem clamp(1rem, 3vw, 2rem) 2.5rem;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: end;
+  margin-bottom: 1.5rem;
+  animation: rise-in 0.6s ease both;
+}
+
+.brandLine {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--leaf);
+}
+
+.top h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 3.5vw, 2.4rem);
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  margin: 0.2rem 0;
+}
+
+.meta {
+  color: var(--ink-soft);
+  font-size: 0.98rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.btn,
+.btnSoft,
+.btnWarn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.7rem 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn {
+  background: var(--mango);
+  color: var(--ink);
+}
+
+.btnSoft {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(21, 32, 25, 0.1);
+  color: var(--ink);
+}
+
+.btnWarn {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.stat {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(21, 32, 25, 0.08);
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
+  animation: rise-in 0.65s ease both;
+}
+
+.stat strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 0.35rem;
+}
+
+.stat span {
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 1rem;
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(21, 32, 25, 0.08);
+  border-radius: 18px;
+  padding: 1.1rem;
+}
+
+.panel h2 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.85rem;
+}
+
+.list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.pulse,
+.flag {
+  border: 1px solid rgba(21, 32, 25, 0.08);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  background: rgba(245, 247, 242, 0.75);
+}
+
+.flag {
+  animation: slide-flag 0.45s ease both;
+  border-color: rgba(155, 44, 44, 0.25);
+  background: #fff7f7;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.name {
+  font-weight: 700;
+}
+
+.sub {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  margin-top: 0.2rem;
+  line-height: 1.35;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.awaiting {
+  background: #efe6c8;
+  color: #6a5200;
+}
+
+.public {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.private {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+}
+
+.links a,
+.links button {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--leaf);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.flagTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+}
+
+.tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(155, 44, 44, 0.1);
+  color: var(--danger);
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+}
+
+.empty {
+  color: var(--ink-soft);
+  padding: 1rem 0.2rem;
+  line-height: 1.45;
+}
+
+.statusSelect {
+  margin-top: 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(21, 32, 25, 0.15);
+  padding: 0.4rem 0.55rem;
+  background: white;
+}
+
+@media (max-width: 900px) {
+  .stats,
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

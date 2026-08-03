@@ -1,123 +1,59 @@
-# Deriv Trade Advisor (suggestions only)
+# GladGate
 
-Python tool that connects to your **Deriv** account, reads recent market ticks and trade history, pulls public financial news, then produces **trade suggestions with confidence scores**.
+**Ask every happy customer. Hold bad reviews before they go public.**
 
-It does **not** place trades.
+GladGate is a WhatsApp-first review gating system for restaurants, auto repair shops, salons, pharmacies, lodges, clinics, hardware shops, car washes, and similar small businesses — especially in developing markets like Zimbabwe.
 
-## Phone / browser access
+Unhappy clients write one-star essays at midnight. GladGate asks the quiet majority while they still feel good, routes praise to Google/Facebook, and flags risky feedback for private recovery.
 
-You can use either:
+## Pricing (USD / month)
 
-1. **Web dashboard** — open in your phone browser
-2. **Telegram bot** — get suggestions as chat messages
+| Plan | Price | Fit |
+| --- | --- | --- |
+| Neighborhood | **$500** | 1 location |
+| Street Smart | **$900** | Up to 3 locations |
+| Citywide | **$1,500** | Up to 10 locations |
 
-Both need the Python process running on a computer / VPS.
+Billing designed for USD bank transfer or EcoCash-style collection in Zimbabwe and the region.
 
-### Web dashboard
+## Product flow
 
-```bash
-python -m deriv_advisor web
-```
+1. After a visit, GladGate auto-asks via **WhatsApp** (SMS fallback).
+2. Score **4–5** with clean language → one-tap **public review** link.
+3. Low scores or complaint / refund / safety language → **held private**, owner alerted, never posted automatically.
 
-Then open:
-
-- This computer: `http://127.0.0.1:8000`
-- Phone on the same Wi‑Fi: `http://<your-computer-ip>:8000`
-
-Optional lock in `.env`:
-
-```env
-DASHBOARD_TOKEN=pick-a-secret
-```
-
-Enter that secret in the dashboard **Access token** field before clicking **Get suggestions**.
-
-### Telegram bot
-
-1. Talk to [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token
-2. Put it in `.env` as `TELEGRAM_BOT_TOKEN=...`
-3. Start:
+## App
 
 ```bash
-python -m deriv_advisor telegram
+cd gladgate
+npm install
+npm run dev
 ```
 
-4. Message your bot → `/chatid` → set `TELEGRAM_ALLOWED_CHAT_IDS`
-5. Send `/suggest` from your phone
+Open [http://localhost:3000](http://localhost:3000).
 
-## What it uses
-
-| Input | Source |
-| --- | --- |
-| Account balance + recent trades | Deriv WebSocket API |
-| Live tick history | Deriv `ticks_history` |
-| News headlines | Free RSS feeds (optional NewsAPI key) |
-| Signals | RSI, SMA crossover, short-term momentum + light news/history nudges |
-
-## Setup
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-```
-
-Edit `.env`:
-
-1. Create an app / note an `app_id` at [developers.deriv.com](https://developers.deriv.com/)
-2. Create an API token in your Deriv account (read access is enough)
-3. Put both values in `.env`
-4. Optional: Telegram + dashboard token settings
-
-Recommended: use a **demo** Deriv token while testing.
-
-## Run
-
-```bash
-python -m deriv_advisor            # one-shot CLI
-python -m deriv_advisor web        # web dashboard
-python -m deriv_advisor telegram   # Telegram bot
-```
-
-Verbose:
-
-```bash
-python -m deriv_advisor -v web
-```
-
-## Bot commands
-
-| Command | Action |
-| --- | --- |
-| `/start` | Help / welcome |
-| `/suggest` | Analyze and send ideas |
-| `/ideas` | Same as `/suggest` |
-| `/chatid` | Show your Telegram chat id |
-
-## Output
-
-- Account snapshot (demo/real, balance)
-- News tone summary + sample headlines
-- Ranked suggestions like `R_100 → CALL | confidence 72.5%`
-- Reasons for each suggestion
-
-Only ideas above `MIN_CONFIDENCE` (default `55`) are shown.
+- `/` — marketing site
+- `/dashboard` — live demo control room (send asks, watch flags)
+- `/feedback/[id]` — customer pulse reply (opened from dashboard)
 
 ## Tests
 
 ```bash
-pip install pytest
-pytest -q
+cd gladgate
+npm test
+npm run lint
+npm run build
 ```
 
-## Important
+## Demo script
 
-- Suggestions are heuristics, not financial advice.
-- Synthetic indices are not driven by news the way FX/stocks are; news only applies a small confidence nudge.
-- Set `DASHBOARD_TOKEN` and `TELEGRAM_ALLOWED_CHAT_IDS` so strangers cannot use your Deriv connection.
-- Keep auto-trading off until you have reviewed many suggestion cycles on demo.
+1. Open `/dashboard`
+2. Click **Auto-ask 3 via WhatsApp**
+3. Open a customer reply link
+4. Try a 5★ clean note → routed public
+5. Try a 2★ note with “terrible” / “refund” → flagged private
 
-## Next step (later)
+## Stack
 
-Optional: scheduled alerts, or gated auto-trade with hard risk limits.
+- Next.js (App Router) + TypeScript
+- In-memory demo store + review gating engine (`src/lib/engine.ts`)
