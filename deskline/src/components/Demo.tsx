@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { getIndustry, type IndustryId } from '../data/industries'
 import { buildSlots, qualifyLead, type TimeSlot } from '../lib/booking'
 
@@ -23,6 +23,7 @@ export function Demo({ industryId, onIndustryChange }: Props) {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
   const [booked, setBooked] = useState(false)
   const [awaitingReply, setAwaitingReply] = useState(false)
+  const lockRef = useRef(false)
 
   const slots = useMemo(() => buildSlots(industry), [industry])
   const question = industry.questions[step]
@@ -39,6 +40,7 @@ export function Demo({ industryId, onIndustryChange }: Props) {
     setSelectedSlot(null)
     setBooked(false)
     setAwaitingReply(false)
+    lockRef.current = false
     setMessages([
       {
         id: 'greet',
@@ -60,7 +62,8 @@ export function Demo({ industryId, onIndustryChange }: Props) {
   }, [result])
 
   function chooseOption(value: string, label: string) {
-    if (!question || awaitingReply) return
+    if (!question || awaitingReply || lockRef.current) return
+    lockRef.current = true
     const currentQuestion = question
     const nextAnswers = { ...answers, [currentQuestion.id]: value }
     const nextStep = step + 1
@@ -84,6 +87,7 @@ export function Demo({ industryId, onIndustryChange }: Props) {
         ])
         setStep(nextStep)
         setAwaitingReply(false)
+        lockRef.current = false
         return
       }
 
@@ -98,6 +102,7 @@ export function Demo({ industryId, onIndustryChange }: Props) {
       ])
       setStep(nextStep)
       setAwaitingReply(false)
+      lockRef.current = false
     }, 220)
   }
 
@@ -107,6 +112,7 @@ export function Demo({ industryId, onIndustryChange }: Props) {
     setSelectedSlot(null)
     setBooked(false)
     setAwaitingReply(false)
+    lockRef.current = false
     setCallerName('')
     setPhone('')
     setMessages([
@@ -162,14 +168,7 @@ export function Demo({ industryId, onIndustryChange }: Props) {
                     key={`${question.id}-${option.value}`}
                     type="button"
                     data-demo-option={option.value}
-                    onMouseDown={(event) => {
-                      event.preventDefault()
-                      chooseOption(option.value, option.label)
-                    }}
-                    onClick={(event) => {
-                      event.preventDefault()
-                      chooseOption(option.value, option.label)
-                    }}
+                    onClick={() => chooseOption(option.value, option.label)}
                   >
                     {option.label}
                   </button>
