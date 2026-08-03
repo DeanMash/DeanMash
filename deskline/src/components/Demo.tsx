@@ -22,6 +22,7 @@ export function Demo({ industryId, onIndustryChange }: Props) {
   const [phone, setPhone] = useState('')
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
   const [booked, setBooked] = useState(false)
+  const [awaitingReply, setAwaitingReply] = useState(false)
 
   const slots = useMemo(() => buildSlots(industry), [industry])
   const question = industry.questions[step]
@@ -37,6 +38,7 @@ export function Demo({ industryId, onIndustryChange }: Props) {
     setAnswers({})
     setSelectedSlot(null)
     setBooked(false)
+    setAwaitingReply(false)
     setMessages([
       {
         id: 'greet',
@@ -58,39 +60,45 @@ export function Demo({ industryId, onIndustryChange }: Props) {
   }, [result])
 
   function chooseOption(value: string, label: string) {
-    if (!question) return
-    const nextAnswers = { ...answers, [question.id]: value }
+    if (!question || awaitingReply) return
+    const currentQuestion = question
+    const nextAnswers = { ...answers, [currentQuestion.id]: value }
+    const nextStep = step + 1
+    setAwaitingReply(true)
     setAnswers(nextAnswers)
     setMessages((prev) => [
       ...prev,
-      { id: `a-${question.id}`, role: 'caller', text: label },
+      { id: `a-${currentQuestion.id}-${Date.now()}`, role: 'caller', text: label },
     ])
 
-    const nextStep = step + 1
-    if (nextStep < industry.questions.length) {
-      const nextQuestion = industry.questions[nextStep]
-      setTimeout(() => {
+    window.setTimeout(() => {
+      if (nextStep < industry.questions.length) {
+        const nextQuestion = industry.questions[nextStep]
         setMessages((prev) => [
           ...prev,
-          { id: `q-${nextQuestion.id}`, role: 'ai', text: nextQuestion.prompt },
+          {
+            id: `q-${nextQuestion.id}-${Date.now()}`,
+            role: 'ai',
+            text: nextQuestion.prompt,
+          },
         ])
         setStep(nextStep)
-      }, 280)
-      return
-    }
+        setAwaitingReply(false)
+        return
+      }
 
-    setTimeout(() => {
       const outcome = qualifyLead(industry, nextAnswers)
       setMessages((prev) => [
         ...prev,
         {
-          id: 'outcome',
+          id: `outcome-${Date.now()}`,
           role: 'ai',
           text: `${outcome.message} I can hold ${outcome.recommendedSlot ? `${outcome.recommendedSlot.dayLabel} at ${outcome.recommendedSlot.label}` : 'a callback from the team'}.`,
         },
       ])
       setStep(nextStep)
-    }, 280)
+      setAwaitingReply(false)
+    }, 220)
   }
 
   function resetDemo() {
@@ -98,6 +106,7 @@ export function Demo({ industryId, onIndustryChange }: Props) {
     setAnswers({})
     setSelectedSlot(null)
     setBooked(false)
+    setAwaitingReply(false)
     setCallerName('')
     setPhone('')
     setMessages([
@@ -146,18 +155,31 @@ export function Demo({ industryId, onIndustryChange }: Props) {
               ))}
             </div>
 
-            {!finishedQuestions && question && (
+            {!finishedQuestions && question && !awaitingReply && (
               <div className="option-list" aria-label="Caller responses">
                 {question.options.map((option) => (
                   <button
-                    key={option.value}
+                    key={`${question.id}-${option.value}`}
                     type="button"
-                    onClick={() => chooseOption(option.value, option.label)}
+                    data-demo-option={option.value}
+                    onMouseDown={(event) => {
+                      event.preventDefault()
+                      chooseOption(option.value, option.label)
+                    }}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      chooseOption(option.value, option.label)
+                    }}
                   >
                     {option.label}
                   </button>
                 ))}
               </div>
+            )}
+            {awaitingReply && (
+              <p className="typing-note" aria-live="polite">
+                Deskline is responding…
+              </p>
             )}
           </div>
 

@@ -545,6 +545,16 @@ p {
   display: grid;
   gap: 0.55rem;
   margin-top: 1rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.typing-note {
+  margin-top: 1rem;
+  color: var(--sand-dim);
+  font-size: 0.95rem;
+  font-style: italic;
 }
 
 .option-list button {
@@ -553,18 +563,22 @@ p {
   background: rgba(255, 255, 255, 0.03);
   color: var(--foam);
   border-radius: 12px;
-  padding: 0.85rem 1rem;
+  padding: 0.95rem 1rem;
+  min-height: 3rem;
   cursor: pointer;
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
   transition:
     border-color 160ms ease,
-    background 160ms ease,
-    transform 160ms ease;
+    background 160ms ease;
 }
 
-.option-list button:hover {
+.option-list button:hover,
+.option-list button:focus-visible {
   border-color: var(--teal-bright);
   background: rgba(61, 184, 160, 0.1);
-  transform: translateX(3px);
+  outline: none;
 }
 
 .result-panel h3 {
