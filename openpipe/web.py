@@ -14,7 +14,9 @@ from . import config
 from .engine import OutreachEngine
 from .messaging import MessageSender
 from .pricing import list_plans
+from .starters import list_starters
 from .store import Store, prospect_to_dict
+from .templates_msg import sample_sequences
 from .verticals import list_verticals
 
 STATIC = Path(__file__).resolve().parent / "static"
@@ -58,8 +60,9 @@ def create_app(store: Store | None = None) -> FastAPI:
     engine = OutreachEngine(store, MessageSender())
     app = FastAPI(title="OpenPipe", version="0.1.0")
 
-    biz = store.seed_demo()
-    engine.plan_business(biz.id)
+    store.seed_demo()
+    for biz in store.list_businesses():
+        engine.plan_business(biz.id)
 
     def _auth(token: str | None) -> None:
         expected = config.DASHBOARD_TOKEN
@@ -72,7 +75,24 @@ def create_app(store: Store | None = None) -> FastAPI:
         businesses = store.list_businesses()
         if not businesses:
             raise HTTPException(status_code=404, detail="No business")
+        for b in businesses:
+            if b.id == "demo-insurance" or b.vertical == "insurance":
+                return b.id
         return businesses[0].id
+
+    def _biz_payload(biz) -> dict[str, Any]:
+        return {
+            "id": biz.id,
+            "name": biz.name,
+            "vertical": biz.vertical,
+            "city": biz.city,
+            "sender_name": biz.sender_name,
+            "sender_email": biz.sender_email,
+            "booking_link": biz.booking_link,
+            "offer": biz.offer,
+            "plan": biz.plan,
+            "niche": biz.niche,
+        }
 
     @app.get("/api/health")
     def health() -> dict[str, str]:
@@ -95,6 +115,29 @@ def create_app(store: Store | None = None) -> FastAPI:
     def plans() -> list[dict[str, Any]]:
         return list_plans()
 
+    @app.get("/api/starters")
+    def starters() -> list[dict[str, Any]]:
+        return list_starters()
+
+    @app.get("/api/samples")
+    def samples() -> list[dict[str, Any]]:
+        return sample_sequences()
+
+    @app.get("/api/businesses")
+    def businesses(
+        x_openpipe_token: str | None = Header(default=None),
+    ) -> list[dict[str, Any]]:
+        _auth(x_openpipe_token)
+        starter_map = {s["id"]: s for s in list_starters()}
+        starter_by_vertical = {s["vertical"]: s for s in list_starters()}
+        out = []
+        for biz in store.list_businesses():
+            payload = _biz_payload(biz)
+            tip = starter_map.get(biz.id) or starter_by_vertical.get(biz.vertical, {})
+            payload["blurb"] = tip.get("blurb", "")
+            payload["start_tip"] = tip.get("start_tip", "")
+            out.append(payload)
+        return out
     @app.get("/api/business")
     def business(
         business_id: str | None = None,
@@ -104,18 +147,13 @@ def create_app(store: Store | None = None) -> FastAPI:
         biz = store.get_business(_biz_id(business_id))
         if not biz:
             raise HTTPException(status_code=404, detail="Business not found")
-        return {
-            "id": biz.id,
-            "name": biz.name,
-            "vertical": biz.vertical,
-            "city": biz.city,
-            "sender_name": biz.sender_name,
-            "sender_email": biz.sender_email,
-            "booking_link": biz.booking_link,
-            "offer": biz.offer,
-            "plan": biz.plan,
-            "niche": biz.niche,
-        }
+        payload = _biz_payload(biz)
+        tip = next((s for s in list_starters() if s["id"] == biz.id), None)
+        if not tip:
+            tip = next((s for s in list_starters() if s["vertical"] == biz.vertical), None)
+        payload["blurb"] = (tip or {}).get("blurb", "")
+        payload["start_tip"] = (tip or {}).get("start_tip", "")
+        return payload
 
     @app.get("/api/stats")
     def stats(

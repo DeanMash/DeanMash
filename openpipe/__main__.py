@@ -38,8 +38,10 @@ def main() -> None:
 
     if args.command == "seed":
         biz = store.seed_demo(force=True)
-        engine.plan_business(biz.id)
-        print(f"Seeded demo business: {biz.name} ({biz.id})")
+        for b in store.list_businesses():
+            engine.plan_business(b.id)
+        names = ", ".join(b.name for b in store.list_businesses())
+        print(f"Seeded ICP kits: {names} (default {biz.name})")
         return
 
     if args.command == "discover":
@@ -49,9 +51,10 @@ def main() -> None:
         return
 
     if args.command == "plan":
-        biz = store.seed_demo()
-        result = engine.plan_business(biz.id)
-        print(result)
+        store.seed_demo()
+        for b in store.list_businesses():
+            result = engine.plan_business(b.id)
+            print(f"{b.name}: {result}")
         return
 
     if args.command == "run":

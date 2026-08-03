@@ -166,6 +166,14 @@ a {
   animation: glow-pulse 6s ease-in-out infinite alternate;
 }
 
+.hero-wash {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 55% 45% at 78% 22%, rgba(217, 119, 6, 0.22), transparent 70%),
+    radial-gradient(ellipse 40% 35% at 18% 70%, rgba(20, 184, 166, 0.18), transparent 65%);
+}
+
 .hero-envelope {
   position: absolute;
   right: 8%;
@@ -317,6 +325,80 @@ a {
 .mail-demo {
   display: grid;
   gap: 2rem;
+}
+
+.sample-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sample-tab {
+  font: inherit;
+  font-weight: 700;
+  padding: 0.55rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.sample-tab.is-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--white);
+}
+
+.mail-meta {
+  margin: 0.65rem 0 0 !important;
+  font-size: 0.85rem;
+  color: var(--teal) !important;
+  font-weight: 600;
+}
+
+.tiny {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.core-icps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.core-icp {
+  padding-top: 0.75rem;
+  border-top: 2px solid var(--teal);
+}
+
+.core-icp h3 {
+  margin: 0 0 0.5rem;
+  font-family: var(--display);
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+}
+
+.core-icp p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.core-tip {
+  margin-top: 0.65rem !important;
+  color: var(--ink) !important;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 800px) {
+  .core-icps {
+    grid-template-columns: 1fr;
+  }
 }
 
 .mail-stack {

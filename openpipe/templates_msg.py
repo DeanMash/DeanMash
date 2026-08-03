@@ -35,6 +35,39 @@ def all_days() -> tuple[int, ...]:
     return SEQUENCE_DAYS
 
 
+def sample_sequences(verticals: tuple[str, ...] | None = None) -> list[dict]:
+    """Marketing-site samples for the three core ICPs."""
+    from .starters import CORE_VERTICALS, SAMPLE_PROSPECTS
+
+    keys = verticals or CORE_VERTICALS
+    out: list[dict] = []
+    for vertical in keys:
+        ctx = SAMPLE_PROSPECTS.get(vertical, SAMPLE_PROSPECTS["insurance"])
+        days = [
+            {
+                "day": day,
+                "subject": render_sequence(vertical, day, **ctx).subject,
+                "body": render_sequence(vertical, day, **ctx).body,
+            }
+            for day in SEQUENCE_DAYS
+        ]
+        out.append(
+            {
+                "vertical": vertical,
+                "label": {
+                    "insurance": "Insurance brokers",
+                    "advisor": "Financial advisors",
+                    "b2b": "B2B services",
+                }.get(vertical, vertical),
+                "prospect": ctx["prospect_name"],
+                "company": ctx["company"],
+                "trigger": ctx["trigger"],
+                "days": days,
+            }
+        )
+    return out
+
+
 def render_sequence(
     vertical: str,
     day: int,

@@ -16,6 +16,10 @@
     <header class="top">
       <a class="brand" href="/">Open<span>Pipe</span></a>
       <div class="top-actions">
+        <label class="icp-label">
+          ICP
+          <select id="biz-switch" aria-label="Switch ICP demo"></select>
+        </label>
         <input class="token" id="token" type="password" placeholder="Access token (optional)" />
         <button class="btn secondary" id="btn-refresh" type="button">Refresh</button>
         <button class="btn secondary" id="btn-discover" type="button">Find prospects</button>
@@ -34,6 +38,18 @@
           Demo mode logs sends — no live email until credentials are connected.
         </p>
       </div>
+
+      <section class="start-guide" id="start-guide" aria-label="Where to start with email">
+        <div class="start-copy">
+          <h2>Don't know where to start with email?</h2>
+          <p id="start-tip">Pick your ICP, find prospects, preview the sequence, then send Day 0.</p>
+        </div>
+        <ol class="start-steps">
+          <li data-step="1"><span>01</span> Find prospects</li>
+          <li data-step="2"><span>02</span> Preview copy</li>
+          <li data-step="3"><span>03</span> Send due emails</li>
+        </ol>
+      </section>
 
       <section class="stats" id="stats"></section>
 

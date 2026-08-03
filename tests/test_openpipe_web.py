@@ -27,10 +27,29 @@ def test_landing_and_apis(tmp_path: Path, monkeypatch):
     prices = {p["price_usd"] for p in plans}
     assert 900 in prices and 2500 in prices
 
-    stats = client.get("/api/stats").json()
+    starters = client.get("/api/starters").json()
+    assert {s["vertical"] for s in starters} >= {"insurance", "advisor", "b2b"}
+
+    samples = client.get("/api/samples").json()
+    assert len(samples) == 3
+    assert all(len(s["days"]) == 3 for s in samples)
+
+    businesses = client.get("/api/businesses").json()
+    assert len(businesses) >= 3
+    verticals_present = {b["vertical"] for b in businesses}
+    assert {"insurance", "advisor", "b2b"} <= verticals_present
+
+    advisor = next(b for b in businesses if b["vertical"] == "advisor")
+    advisor_detail = client.get(f"/api/business?business_id={advisor['id']}").json()
+    assert advisor_detail["vertical"] == "advisor"
+    assert advisor_detail["start_tip"]
+
+    insurance = next(b for b in businesses if b["vertical"] == "insurance")
+    stats = client.get(f"/api/stats?business_id={insurance['id']}").json()
     assert stats["prospects"] >= 1
 
-    discover = client.post("/api/discover", json={"limit": 3})
+    b2b = next(b for b in businesses if b["vertical"] == "b2b")
+    discover = client.post(f"/api/discover?business_id={b2b['id']}", json={"limit": 3})
     assert discover.status_code == 200
     assert "added" in discover.json()
 

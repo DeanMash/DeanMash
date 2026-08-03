@@ -62,6 +62,92 @@ a {
   align-items: center;
 }
 
+.icp-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.icp-label select {
+  font: inherit;
+  font-weight: 600;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  background: var(--white);
+  max-width: 240px;
+}
+
+.start-guide {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.25rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background:
+    linear-gradient(120deg, rgba(15, 118, 110, 0.08), transparent 55%),
+    var(--white);
+}
+
+.start-copy h2 {
+  margin: 0 0 0.35rem;
+  font-family: var(--display);
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+}
+
+.start-copy p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.start-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.start-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  opacity: 0.75;
+  transition: opacity 0.25s ease, color 0.25s ease;
+}
+
+.start-steps li span {
+  font-family: var(--display);
+  font-weight: 800;
+  color: var(--teal);
+  min-width: 1.5rem;
+}
+
+.start-steps li.done {
+  opacity: 1;
+  color: var(--ink);
+}
+
+.start-steps li.done span {
+  color: var(--signal);
+}
+
+@media (max-width: 800px) {
+  .start-guide {
+    grid-template-columns: 1fr;
+  }
+}
+
 .token {
   font: inherit;
   padding: 0.5rem 0.65rem;

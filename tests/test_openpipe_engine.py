@@ -73,6 +73,27 @@ def test_plan_and_run_due(tmp_path: Path):
     assert store.stats(biz.id)["messages_sent"] >= 1
 
 
+def test_sample_sequences_cover_core_icps():
+    from openpipe.templates_msg import sample_sequences
+
+    samples = sample_sequences()
+    assert {s["vertical"] for s in samples} == {"insurance", "advisor", "b2b"}
+    for sample in samples:
+        assert len(sample["days"]) == 3
+        bodies = " ".join(d["body"] for d in sample["days"])
+        assert sample["prospect"].split()[0] in bodies
+
+
+def test_seed_creates_three_icp_kits(tmp_path: Path):
+    store = Store(tmp_path / "kits.db")
+    store.seed_demo(force=True)
+    businesses = store.list_businesses()
+    assert len(businesses) == 3
+    assert {b.vertical for b in businesses} == {"insurance", "advisor", "b2b"}
+    for biz in businesses:
+        assert store.list_prospects(biz.id)
+
+
 def test_replied_skips_remaining(tmp_path: Path):
     store = Store(tmp_path / "reply.db")
     biz = store.seed_demo(force=True)

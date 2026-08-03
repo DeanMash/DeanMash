@@ -13,6 +13,7 @@ from uuid import uuid4
 
 from . import config
 from .prospects import discover
+from .starters import STARTERS
 
 
 def _utcnow() -> datetime:
@@ -431,39 +432,34 @@ class Store:
         )
         return added
 
-    def seed_demo(self, force: bool = False) -> Business:
-        existing = self.list_businesses()
-        if existing and not force:
-            return existing[0]
-
-        if force:
-            with self._conn() as conn:
-                conn.executescript(
-                    "DELETE FROM messages; DELETE FROM prospects; DELETE FROM events; DELETE FROM businesses;"
-                )
+    def _seed_kit(self, kit_id: str) -> Business | None:
+        """Create one ICP starter kit with sample prospects if missing."""
+        kit = next((s for s in STARTERS if s.id == kit_id), None)
+        if not kit:
+            return None
+        existing = self.get_business(kit.id)
+        if existing:
+            return existing
 
         biz = self.create_business(
-            id="demo-broker",
-            name="Horizon Cover Brokers",
-            vertical="insurance",
-            city="Harare",
-            sender_name="Tariro Moyo",
-            sender_email="tariro@horizoncover.example",
-            booking_link="https://cal.example/horizon-cover",
-            offer="a 20-minute cover gap review for your business",
-            plan="pipeline",
-            niche="fleet logistics sme",
+            id=kit.id,
+            name=kit.name,
+            vertical=kit.vertical,
+            city=kit.city,
+            sender_name=kit.sender_name,
+            sender_email=kit.sender_email,
+            booking_link=kit.booking_link,
+            offer=kit.offer,
+            plan=kit.plan,
+            niche=kit.niche,
         )
-
-        # Preload a few discovered prospects in varied pipeline states.
         seeded = self.find_prospects(biz.id, limit=8)
-        # Mark one as replied / meeting for dashboard realism.
         if len(seeded) >= 2:
             self.update_prospect(
                 seeded[0].id,
                 status="replied",
                 replied_at=_iso(_utcnow()),
-                notes="Replied — interested in fleet review",
+                notes="Replied — wants to continue the conversation",
             )
         if len(seeded) >= 3:
             self.update_prospect(
@@ -472,14 +468,43 @@ class Store:
                 replied_at=_iso(_utcnow()),
                 notes="Meeting booked Thursday 10:00",
             )
-
         self.add_event(
             biz.id,
             "seed",
-            {"message": "Demo insurance brokerage seeded with Harare SME prospects"},
+            {
+                "message": f"Demo {kit.vertical} book seeded",
+                "blurb": kit.blurb,
+                "start_tip": kit.start_tip,
+            },
         )
         return biz
 
+    def seed_demo(self, force: bool = False) -> Business:
+        """Ensure insurance / advisor / B2B starter kits exist; return insurance."""
+        if force:
+            with self._conn() as conn:
+                conn.executescript(
+                    "DELETE FROM messages; DELETE FROM prospects; DELETE FROM events; DELETE FROM businesses;"
+                )
+
+        existing_by_vertical = {b.vertical: b for b in self.list_businesses()}
+        existing_ids = {b.id for b in self.list_businesses()}
+
+        for kit in STARTERS:
+            if kit.id in existing_ids:
+                continue
+            # Keep a legacy insurance demo (demo-broker) instead of duplicating.
+            if kit.vertical in existing_by_vertical:
+                continue
+            self._seed_kit(kit.id)
+
+        businesses = self.list_businesses()
+        for biz in businesses:
+            if biz.vertical == "insurance" or biz.id in {"demo-insurance", "demo-broker"}:
+                return biz
+        if businesses:
+            return businesses[0]
+        raise RuntimeError("Failed to seed OpenPipe demo kits")
 
 def prospect_to_dict(p: Prospect) -> dict[str, Any]:
     return asdict(p)

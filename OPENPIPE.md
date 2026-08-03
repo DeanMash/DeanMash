@@ -44,10 +44,12 @@ Insurance brokers, financial advisors, B2B service firms, accountants, consultan
 
 ## How it works
 
-1. Set your ICP (vertical, niche keywords, city)
+1. Pick your ICP starter (insurance broker, financial advisor, or B2B services)
 2. OpenPipe discovers matching prospects with trigger signals
 3. Personalised Day 0 / 3 / 7 email sequences are queued
 4. Due messages send automatically (demo mode logs only); replies and meetings stop the sequence
-5. Dashboard shows pipeline, queue, and activity
+5. Dashboard shows pipeline, queue, and a guided “where to start with email” path
 
 Demo mode never hits a live mailbox — it records sends for operators to review.
+
+Operator tip: on `/dashboard`, switch the **ICP** dropdown to try Horizon Cover (insurance), Summit Wealth (advisors), or Northline Growth (B2B).

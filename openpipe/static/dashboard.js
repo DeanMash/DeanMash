@@ -2,12 +2,24 @@
   const tokenInput = document.getElementById("token");
   const bizName = document.getElementById("biz-name");
   const bizMeta = document.getElementById("biz-meta");
+  const bizSwitch = document.getElementById("biz-switch");
   const statsEl = document.getElementById("stats");
   const prospectsBody = document.getElementById("prospects-body");
   const messagesEl = document.getElementById("messages");
   const eventsEl = document.getElementById("events");
   const previewEl = document.getElementById("preview");
   const addForm = document.getElementById("add-prospect");
+  const startTip = document.getElementById("start-tip");
+  const startSteps = document.querySelectorAll(".start-steps li");
+
+  const state = {
+    businessId: localStorage.getItem("openpipe_biz") || "",
+    done: {
+      1: localStorage.getItem("openpipe_step1") === "1",
+      2: localStorage.getItem("openpipe_step2") === "1",
+      3: localStorage.getItem("openpipe_step3") === "1",
+    },
+  };
 
   function headers() {
     const h = { "Content-Type": "application/json" };
@@ -16,8 +28,14 @@
     return h;
   }
 
+  function withBiz(path) {
+    if (!state.businessId) return path;
+    const sep = path.includes("?") ? "&" : "?";
+    return `${path}${sep}business_id=${encodeURIComponent(state.businessId)}`;
+  }
+
   async function api(path, opts = {}) {
-    const res = await fetch(path, {
+    const res = await fetch(withBiz(path), {
       ...opts,
       headers: { ...headers(), ...(opts.headers || {}) },
     });
@@ -28,12 +46,27 @@
     return res.json();
   }
 
+  function markStep(n) {
+    state.done[n] = true;
+    localStorage.setItem(`openpipe_step${n}`, "1");
+    paintSteps();
+  }
+
+  function paintSteps() {
+    startSteps.forEach((li) => {
+      const n = Number(li.dataset.step);
+      li.classList.toggle("done", Boolean(state.done[n]));
+    });
+  }
+
   function statCard(label, value) {
     return `<div class="stat"><div class="label">${label}</div><div class="value">${value}</div></div>`;
   }
 
   async function preview(prospectId, day = 0) {
-    const data = await api(`/api/preview?prospect_id=${encodeURIComponent(prospectId)}&day=${day}`);
+    const data = await api(
+      `/api/preview?prospect_id=${encodeURIComponent(prospectId)}&day=${day}`
+    );
     previewEl.innerHTML = `
       <h3>Email preview · Day ${data.day}</h3>
       <p class="msg-meta">To ${data.to}</p>
@@ -47,9 +80,26 @@
     previewEl.querySelectorAll("button[data-day]").forEach((btn) => {
       btn.addEventListener("click", () => preview(prospectId, Number(btn.dataset.day)));
     });
+    markStep(2);
+  }
+
+  async function loadBusinesses() {
+    const list = await api("/api/businesses");
+    if (!state.businessId || !list.some((b) => b.id === state.businessId)) {
+      state.businessId = list[0]?.id || "";
+      localStorage.setItem("openpipe_biz", state.businessId);
+    }
+    bizSwitch.innerHTML = list
+      .map(
+        (b) =>
+          `<option value="${b.id}" ${b.id === state.businessId ? "selected" : ""}>${b.name} · ${b.vertical}</option>`
+      )
+      .join("");
+    return list;
   }
 
   async function refresh() {
+    await loadBusinesses();
     const [biz, stats, prospects, messages, events] = await Promise.all([
       api("/api/business"),
       api("/api/stats"),
@@ -60,6 +110,7 @@
 
     bizName.textContent = biz.name;
     bizMeta.textContent = `${biz.vertical} · ${biz.city} · ${biz.sender_name} · ${biz.plan} plan · niche: ${biz.niche || "—"}`;
+    startTip.textContent = biz.start_tip || biz.blurb || "Find prospects, preview the sequence, then send.";
 
     statsEl.innerHTML = [
       statCard("Prospects", stats.prospects),
@@ -147,7 +198,21 @@
           )
           .join("")
       : "<p class='tiny'>No activity yet.</p>";
+
+    paintSteps();
   }
+
+  bizSwitch.addEventListener("change", async () => {
+    state.businessId = bizSwitch.value;
+    localStorage.setItem("openpipe_biz", state.businessId);
+    state.done = { 1: false, 2: false, 3: false };
+    localStorage.removeItem("openpipe_step1");
+    localStorage.removeItem("openpipe_step2");
+    localStorage.removeItem("openpipe_step3");
+    previewEl.innerHTML =
+      "<h3>Email preview</h3><p>Select Preview on a prospect to see Day 0 / 3 / 7 copy.</p>";
+    await refresh();
+  });
 
   document.getElementById("btn-refresh").addEventListener("click", () => refresh().catch(alert));
   document.getElementById("btn-plan").addEventListener("click", async () => {
@@ -156,6 +221,7 @@
   });
   document.getElementById("btn-run").addEventListener("click", async () => {
     const result = await api("/api/run", { method: "POST", body: "{}" });
+    markStep(3);
     alert(`Sent ${result.sent} · failed ${result.failed} · checked ${result.checked}`);
     await refresh();
   });
@@ -164,6 +230,7 @@
       method: "POST",
       body: JSON.stringify({ limit: 6 }),
     });
+    markStep(1);
     alert(`Added ${result.added} prospects · planned ${result.messages_planned} emails`);
     await refresh();
   });
@@ -173,6 +240,7 @@
     const data = Object.fromEntries(new FormData(addForm).entries());
     await api("/api/prospects", { method: "POST", body: JSON.stringify(data) });
     addForm.reset();
+    markStep(1);
     await refresh();
   });
 
