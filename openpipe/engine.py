@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from . import config
@@ -29,8 +29,8 @@ class OutreachEngine:
         if not biz:
             return []
 
-        # Anchor sequence to today for new prospects; keep relative days.
-        anchor = date.today()
+        # Anchor Day 0 slightly in the past so demo "Send due" works immediately.
+        now = _utc()
         planned: list[OutboundMessage] = []
 
         for day in all_days():
@@ -46,11 +46,7 @@ class OutreachEngine:
                 offer=biz.offer or DEFAULT_OFFERS.get(biz.vertical),
                 booking_link=biz.booking_link,
             )
-            scheduled = datetime.combine(
-                anchor + timedelta(days=day),
-                datetime.min.time(),
-                tzinfo=timezone.utc,
-            ) + timedelta(hours=9)
+            scheduled = now - timedelta(minutes=5) + timedelta(days=day)
 
             if prospect.status in {"replied", "meeting", "paused"}:
                 status = "skipped"

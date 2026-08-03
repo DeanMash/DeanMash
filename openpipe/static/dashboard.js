@@ -93,7 +93,13 @@
       .join("");
 
     prospectsBody.querySelectorAll("[data-preview]").forEach((btn) => {
-      btn.addEventListener("click", () => preview(btn.dataset.preview, 0));
+      btn.addEventListener("click", () => {
+        preview(btn.dataset.preview, 0)
+          .then(() => {
+            previewEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          })
+          .catch((err) => alert(String(err.message || err)));
+      });
     });
     prospectsBody.querySelectorAll("[data-replied]").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -101,7 +107,7 @@
           method: "POST",
           body: JSON.stringify({ prospect_id: btn.dataset.replied }),
         });
-        refresh();
+        await refresh();
       });
     });
     prospectsBody.querySelectorAll("[data-meeting]").forEach((btn) => {
@@ -110,7 +116,7 @@
           method: "POST",
           body: JSON.stringify({ prospect_id: btn.dataset.meeting }),
         });
-        refresh();
+        await refresh();
       });
     });
 
