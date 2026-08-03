@@ -1,3 +1,19 @@
+# Workspace
+
+## Deskline (after-hours AI receptionist)
+
+Product site + qualification/booking demo for dental surgeries, plumbers, and med spas.
+
+```bash
+cd deskline
+npm install
+npm run dev
+```
+
+See [`deskline/README.md`](deskline/README.md). Pricing: **$1,000–$3,000 / month**.
+
+---
+
 # Deriv Trade Advisor (suggestions only)
 
 Python tool that connects to your **Deriv** account, reads recent market ticks and trade history, pulls public financial news, then produces **trade suggestions with confidence scores**.
