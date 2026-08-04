@@ -1,3 +1,33 @@
+# DeanMash products
+
+## ComeHome (client win-back)
+
+Automated **30 / 60 / 90-day** WhatsApp win-back for gyms, clinics, spas and similar businesses in Zimbabwe. See [COMEHOME.md](COMEHOME.md).
+
+**Important:** run these from inside the cloned `DeanMash` folder (not your user home directory).
+
+```powershell
+# Windows PowerShell
+git clone https://github.com/DeanMash/DeanMash.git
+cd DeanMash
+git checkout cursor/comehome-winback-system-34fa
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m comehome
+```
+
+```bash
+# macOS / Linux
+pip install -r requirements.txt
+python -m comehome
+```
+
+- Site: `http://127.0.0.1:8080/`
+- Dashboard: `http://127.0.0.1:8080/dashboard`
+
+---
+
 # Deriv Trade Advisor (suggestions only)
 
 Python tool that connects to your **Deriv** account, reads recent market ticks and trade history, pulls public financial news, then produces **trade suggestions with confidence scores**.

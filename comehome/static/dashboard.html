@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ComeHome Operator Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Syne:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/dashboard.css" />
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="/">Come<span>Home</span></a>
+      <div class="top-actions">
+        <input class="token" id="token" type="password" placeholder="Access token (optional)" />
+        <button class="btn secondary" id="btn-refresh" type="button">Refresh</button>
+        <button class="btn" id="btn-plan" type="button">Rebuild plan</button>
+        <button class="btn sun" id="btn-run" type="button">Run due messages</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="biz-line">
+        <div>
+          <h1 id="biz-name">Loading…</h1>
+          <p id="biz-meta"></p>
+        </div>
+        <p class="tiny">
+          Demo mode sends to the log — no live WhatsApp until credentials are connected.
+        </p>
+      </div>
+
+      <section class="stats" id="stats"></section>
+
+      <div class="grid">
+        <section class="panel">
+          <h2>Clients</h2>
+          <form class="form-row" id="add-client">
+            <input name="full_name" required placeholder="Full name" />
+            <input name="phone" required placeholder="+263…" />
+            <input name="last_visit" required type="date" />
+            <input name="staff_name" placeholder="Staff name" />
+            <button class="btn" type="submit">Add client</button>
+          </form>
+          <div style="overflow-x: auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Client</th>
+                  <th>Days</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="clients-body"></tbody>
+            </table>
+          </div>
+          <div class="preview-box" id="preview">
+            <h3>Message preview</h3>
+            <p>Select Preview on a client to see their personalised WhatsApp copy.</p>
+          </div>
+        </section>
+
+        <div>
+          <section class="panel" style="margin-bottom: 1.25rem">
+            <h2>Outbound queue</h2>
+            <div id="messages"></div>
+          </section>
+          <section class="panel">
+            <h2>Activity</h2>
+            <div id="events"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script src="/static/dashboard.js"></script>
+  </body>
+</html>
