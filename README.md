@@ -24,17 +24,35 @@ Billing designed for USD bank transfer or EcoCash-style collection in Zimbabwe a
 
 ## App
 
+From the repo root (after clone), run commands **one line at a time**.
+
+**macOS / Linux (bash):**
+
 ```bash
 cd gladgate
 npm install
-npm run dev
+npm run build
+npm start
 ```
+
+**Windows PowerShell:**
+
+```powershell
+cd gladgate
+npm install
+npm run build
+npm start
+```
+
+For local development with hot reload, use `npm run dev` instead of `build` + `start`.
 
 Open [http://localhost:3000](http://localhost:3000).
 
 - `/` — marketing site
 - `/dashboard` — live demo control room (send asks, watch flags)
 - `/feedback/[id]` — customer pulse reply (opened from dashboard)
+
+> PowerShell tip: older Windows PowerShell does not support `&&`. Run each command on its own line, or use `;` between commands (for example `cd gladgate; npm install`).
 
 ## Tests
 
