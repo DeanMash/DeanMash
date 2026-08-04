@@ -6,21 +6,62 @@ Personal WhatsApp check-ins (SMS fallback) that feel like a staff member wrote t
 
 **Pricing:** Studio **$800**/mo · Practice **$1,400**/mo · Chain **$2,000**/mo
 
-## Run
+## Get the code first
+
+You must run commands **inside the cloned repo folder** (where `requirements.txt` and the `comehome` folder live). Running them from your user home folder will fail with “No such file” / “No module named comehome”.
+
+### Windows (PowerShell)
+
+```powershell
+cd $HOME
+git clone https://github.com/DeanMash/DeanMash.git
+cd DeanMash
+git checkout cursor/comehome-winback-system-34fa
+
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python -m comehome
+```
+
+If `Activate.ps1` is blocked, run once:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+Then open:
+
+- Marketing site: http://127.0.0.1:8080/
+- Operator dashboard: http://127.0.0.1:8080/dashboard
+
+Stop the server with `Ctrl+C`.
+
+Already cloned? Just:
+
+```powershell
+cd path\to\DeanMash
+git pull
+git checkout cursor/comehome-winback-system-34fa
+.\.venv\Scripts\Activate.ps1   # if you already made a venv
+pip install -r requirements.txt
+python -m comehome
+```
+
+### macOS / Linux
 
 ```bash
+git clone https://github.com/DeanMash/DeanMash.git
+cd DeanMash
+git checkout cursor/comehome-winback-system-34fa
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python -m comehome
 ```
 
-Open:
-
-- Marketing site: `http://127.0.0.1:8080/`
-- Operator dashboard: `http://127.0.0.1:8080/dashboard`
-
-Optional lock:
+Optional lock (create a `.env` file in the repo root):
 
 ```env
 COMEHOME_DASHBOARD_TOKEN=pick-a-secret
