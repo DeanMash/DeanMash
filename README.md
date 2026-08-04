@@ -4,7 +4,21 @@
 
 Automated **30 / 60 / 90-day** WhatsApp win-back for gyms, clinics, spas and similar businesses in Zimbabwe. See [COMEHOME.md](COMEHOME.md).
 
+**Important:** run these from inside the cloned `DeanMash` folder (not your user home directory).
+
+```powershell
+# Windows PowerShell
+git clone https://github.com/DeanMash/DeanMash.git
+cd DeanMash
+git checkout cursor/comehome-winback-system-34fa
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m comehome
+```
+
 ```bash
+# macOS / Linux
 pip install -r requirements.txt
 python -m comehome
 ```
