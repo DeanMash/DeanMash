@@ -39,6 +39,53 @@ One saved mid-ticket roof or remodel pays for months of software.
 
 ## Quick start
 
+You must run these commands **inside the project folder** (the folder that contains `requirements.txt` and `closeloop/`).  
+If you are in `C:\Users\...` alone, Python cannot find the app.
+
+### 1) Get the code
+
+```powershell
+cd $HOME
+git clone https://github.com/DeanMash/DeanMash.git CloseLoop
+cd CloseLoop
+git checkout cursor/contractor-closeloop-followup
+```
+
+Or download the ZIP from GitHub → Extract → open that folder in PowerShell with:
+
+```powershell
+cd path\to\DeanMash
+```
+
+Confirm you are in the right place:
+
+```powershell
+dir requirements.txt
+dir closeloop
+```
+
+### 2) Windows (PowerShell)
+
+Type **only** the lines below — do **not** paste `PS C:\...>` prompts or error messages.
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
+python -m closeloop web
+```
+
+If activation is blocked, run once:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+Then try `.\.venv\Scripts\Activate.ps1` again.
+
+### 3) Mac / Linux
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
