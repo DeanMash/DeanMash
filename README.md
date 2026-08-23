@@ -99,14 +99,29 @@ Shops register → go to their shop dashboard. Project + launch post appear in M
 
 ## Go live on the internet (Vercel)
 
-1. Push this branch to GitHub
-2. Import repo at [vercel.com](https://vercel.com) → root directory: `gladgate`
-3. Add environment variables from `gladgate/.env.example`:
-   - `NEXT_PUBLIC_APP_URL` = your live URL
-   - `MASHTECH_DASHBOARD_PASSWORD` = strong password
-   - `MASHTECH_SESSION_SECRET` = random string
-   - `ECOCASH_WEBHOOK_SECRET` = webhook secret
-4. Deploy → open `https://your-app.vercel.app/mashtech/login`
+GladGate lives in the **`gladgate`** folder (Next.js). The repo root is FastAPI — do **not** deploy `./`.
+
+### Exact Vercel settings
+
+| Field | Value |
+| --- | --- |
+| GitHub repo | `DeanMash/DeanMash` |
+| Branch | **`main`** |
+| Root Directory | **`gladgate`** (click Edit → open folder → select `gladgate`) |
+| Framework Preset | **Next.js** (must appear after you pick `gladgate`) |
+
+If Framework still says **FastAPI**, Root Directory is still `./` — change it to `gladgate` and wait for Vercel to re-detect.
+
+### Env vars (Settings → Environment Variables)
+
+From `gladgate/.env.example`:
+
+- `NEXT_PUBLIC_APP_URL` = your live URL (e.g. `https://gladgate.vercel.app`)
+- `MASHTECH_DASHBOARD_PASSWORD` = strong password
+- `MASHTECH_SESSION_SECRET` = random string
+- `ECOCASH_WEBHOOK_SECRET` = webhook secret
+
+Deploy → open `/mashtech/login` on your live URL.
 
 ```powershell
 cd gladgate
