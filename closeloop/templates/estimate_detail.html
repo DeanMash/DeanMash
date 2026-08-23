@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{{ estimate.homeowner_name }} — {{ app_name }}{% endblock %}
+{% block content %}
+<section style="padding: 0.5rem 0 1rem;">
+  <a class="muted tiny" href="/dashboard">← Back to dashboard</a>
+  <div style="display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; align-items:end; margin-top:0.5rem;">
+    <div>
+      <div class="muted tiny">{{ trade.emoji }} {{ trade.label }} · quoted {{ estimate.quoted_on | datefmt }}</div>
+      <h1 style="margin:0.2rem 0;">{{ estimate.homeowner_name }}</h1>
+      <p class="muted" style="margin:0;">{{ estimate.address }} · {{ estimate.job_title or 'Project' }}</p>
+    </div>
+    <div style="text-align:right;">
+      <div class="value" style="font-size:2rem; font-weight:800;">{{ estimate.amount | money }}</div>
+      <span class="badge badge-{{ estimate.status }}">{{ estimate.status }}</span>
+    </div>
+  </div>
+</section>
+
+<section class="grid-2">
+  <div class="card card-pad">
+    <h2 style="margin:0 0 0.8rem; font-size:1.2rem;">Follow-up sequence</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Channel</th>
+            <th>Scheduled</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fu in estimate.follow_ups %}
+          <tr>
+            <td><strong>Day {{ fu.day }}</strong><div class="muted tiny">{{ fu.intent }}</div></td>
+            <td>{{ fu.channel }}</td>
+            <td>{{ fu.scheduled_for | datefmt }}</td>
+            <td><span class="badge badge-{{ fu.status }}">{{ fu.status }}</span></td>
+          </tr>
+          <tr>
+            <td colspan="4">
+              {% if fu.subject %}<div class="tiny"><strong>{{ fu.subject }}</strong></div>{% endif %}
+              <div class="call-box">{{ fu.body }}</div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="display:grid; gap:1rem;">
+    <div class="card card-pad">
+      <h2 style="margin:0 0 0.6rem; font-size:1.2rem;">Contact</h2>
+      <p class="tiny" style="margin:0.3rem 0;"><strong>Phone:</strong> {{ estimate.homeowner_phone or '—' }}</p>
+      <p class="tiny" style="margin:0.3rem 0;"><strong>Email:</strong> {{ estimate.homeowner_email or '—' }}</p>
+      <p class="tiny" style="margin:0.3rem 0;"><strong>Next follow-up:</strong>
+        {% if estimate.next_follow_up_on %}{{ estimate.next_follow_up_on | datefmt }}{% else %}—{% endif %}
+      </p>
+      {% if estimate.notes %}
+      <p class="tiny muted" style="margin-top:0.8rem;">{{ estimate.notes }}</p>
+      {% endif %}
+      {% if estimate.lost_reason %}
+      <p class="tiny" style="margin-top:0.8rem; color:#ffb1b9;"><strong>Lost reason:</strong> {{ estimate.lost_reason }}</p>
+      {% endif %}
+    </div>
+
+    <div class="card card-pad">
+      <h2 style="margin:0 0 0.6rem; font-size:1.2rem;">Update status</h2>
+      <p class="muted tiny">Mark won when they book. Mark lost when they choose someone else — pending messages stop.</p>
+      <form class="form" method="post" action="/estimates/{{ estimate.id }}/status" style="margin-top:0.8rem;">
+        <label>Status
+          <select name="status">
+            <option value="open" {% if estimate.status=='open' %}selected{% endif %}>Open — keep chasing</option>
+            <option value="won" {% if estimate.status=='won' %}selected{% endif %}>Won — job booked</option>
+            <option value="lost" {% if estimate.status=='lost' %}selected{% endif %}>Lost — closed out</option>
+            <option value="paused" {% if estimate.status=='paused' %}selected{% endif %}>Paused</option>
+          </select>
+        </label>
+        <label>Lost reason (if lost)
+          <input name="lost_reason" placeholder="Went with cheaper bid / no follow-up / timing" value="{{ estimate.lost_reason }}" />
+        </label>
+        <button class="btn btn-primary" type="submit">Save status</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

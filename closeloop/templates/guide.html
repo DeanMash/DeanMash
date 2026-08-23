@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}How to register — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:1rem;">
+  <h2>Step-by-step: register & start automatic follow-ups</h2>
+  <p class="sub">
+    Share this page or the signup link <code style="color:#9fd9ff;">{{ register_url }}</code>
+    in ads, catalogues, and social posts.
+  </p>
+
+  <div class="card card-pad" style="margin-bottom:1.2rem;">
+    {% for s in steps %}
+    <div style="display:grid; grid-template-columns:56px 1fr; gap:0.9rem; padding:0.85rem 0; border-bottom:1px solid var(--line);">
+      <div class="day-badge">{{ s.step }}</div>
+      <div>
+        <strong>{{ s.title }}</strong>
+        <div class="muted">{{ s.detail }}</div>
+      </div>
+    </div>
+    {% endfor %}
+    <div style="margin-top:1rem; display:flex; gap:0.6rem; flex-wrap:wrap;">
+      <a class="btn btn-primary" href="/register">Register company now</a>
+      <a class="btn btn-secondary" href="/advertise">Get advert / catalogue copy</a>
+    </div>
+  </div>
+
+  <h2>Advantages (for sales talks & posters)</h2>
+  <div class="grid-3" style="margin-top:1rem;">
+    {% for a in advantages %}
+    <div class="trade-card">
+      <h3>{{ a.title }}</h3>
+      <p class="tiny muted" style="margin:0;">{{ a.detail }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <h2 style="margin-top:2rem;">Plans</h2>
+  <div class="grid-3" style="margin-top:1rem;">
+    {% for tier in tiers %}
+    <div class="price-card {% if tier.highlighted %}highlight{% endif %}">
+      <div class="price">{{ tier.price_label }}</div>
+      <strong>{{ tier.name }}</strong>
+      <p class="tiny muted">{{ tier.blurb }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Register your company — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:1rem;">
+  <h2>Register your company</h2>
+  <p class="sub">
+    Public signup link for contractors. After you register, add clients from each estimate —
+    WhatsApp + email follow-ups start automatically.
+  </p>
+  <div class="grid-2">
+    <div class="card card-pad">
+      {% if error %}<div class="flash" style="background:rgba(255,93,108,0.12);border-color:rgba(255,93,108,0.4);color:#ffb1b9;">{{ error }}</div>{% endif %}
+      <form class="form" method="post" action="/register">
+        <div class="form-row">
+          <label>Company name
+            <input name="name" required placeholder="Summit Shield Roofing" />
+          </label>
+          <label>Your name
+            <input name="owner_name" required placeholder="Marcus Hill" />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Company phone
+            <input name="phone" placeholder="(555) 014-2200" />
+          </label>
+          <label>Work email (login)
+            <input name="email" type="email" required placeholder="you@company.com" />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Password (min 6 chars)
+            <input name="password" type="password" required minlength="6" />
+          </label>
+          <label>Primary trade
+            <select name="trade_key">
+              {% for t in trades %}
+              <option value="{{ t.key }}">{{ t.emoji }} {{ t.label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+        <label>Plan
+          <select name="plan_key">
+            {% for tier in tiers %}
+            <option value="{{ tier.key }}" {% if tier.key == selected_plan or (not selected_plan and tier.highlighted) %}selected{% endif %}>
+              {{ tier.name }} — {{ tier.price_label }}
+            </option>
+            {% endfor %}
+          </select>
+        </label>
+        <button class="btn btn-primary" type="submit">Create company & continue</button>
+      </form>
+      <p class="muted tiny" style="margin-top:1rem;">Already registered? <a href="/login">Log in</a></p>
+    </div>
+    <div class="card card-pad">
+      <h3 style="margin-top:0;">What happens next</h3>
+      <ol class="muted" style="padding-left:1.2rem;">
+        {% for s in steps %}
+        <li style="margin:0.45rem 0;"><strong style="color:var(--text);">{{ s.title }}</strong> — {{ s.detail }}</li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+</section>
+{% endblock %}

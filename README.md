@@ -1,123 +1,156 @@
-# Deriv Trade Advisor (suggestions only)
+# CloseLoop
 
-Python tool that connects to your **Deriv** account, reads recent market ticks and trade history, pulls public financial news, then produces **trade suggestions with confidence scores**.
+**Potential clients click a link → register their company → add clients → WhatsApp + email follow-ups run automatically.**
 
-It does **not** place trades.
+A contractor drives to a homeowner’s house, spends 45 minutes quoting, sends the estimate… and never follows up. The homeowner goes with whoever calls back.
 
-## Phone / browser access
+CloseLoop gives you a **public registration link**, a company dashboard, and automatic **WhatsApp + email** chases on **Day 0** (welcome), **Day 2**, **Day 5**, and **Day 10**.
 
-You can use either:
+## Client journey (share this)
 
-1. **Web dashboard** — open in your phone browser
-2. **Telegram bot** — get suggestions as chat messages
+1. Click the signup link (`/register`)
+2. Register the company (name, trade, email, password, plan)
+3. Add a client after each estimate (WhatsApp number + email + amount)
+4. Follow-ups start automatically
+5. Mark won / lost when the job decides
 
-Both need the Python process running on a computer / VPS.
+Full write-up inside the app: **`/guide`**  
+Social + catalogue advert pack: **`/advertise`**
 
-### Web dashboard
+## Who it’s for
 
-```bash
-python -m deriv_advisor web
-```
-
-Then open:
-
-- This computer: `http://127.0.0.1:8000`
-- Phone on the same Wi‑Fi: `http://<your-computer-ip>:8000`
-
-Optional lock in `.env`:
-
-```env
-DASHBOARD_TOKEN=pick-a-secret
-```
-
-Enter that secret in the dashboard **Access token** field before clicking **Get suggestions**.
-
-### Telegram bot
-
-1. Talk to [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token
-2. Put it in `.env` as `TELEGRAM_BOT_TOKEN=...`
-3. Start:
-
-```bash
-python -m deriv_advisor telegram
-```
-
-4. Message your bot → `/chatid` → set `TELEGRAM_ALLOWED_CHAT_IDS`
-5. Send `/suggest` from your phone
-
-## What it uses
-
-| Input | Source |
+| Trade | Why follow-up wins |
 | --- | --- |
-| Account balance + recent trades | Deriv WebSocket API |
-| Live tick history | Deriv `ticks_history` |
-| News headlines | Free RSS feeds (optional NewsAPI key) |
-| Signals | RSI, SMA crossover, short-term momentum + light news/history nudges |
+| Roofing | 3 bids → first persistent callback often wins |
+| Painting | Protects margin vs cheap silent competitors |
+| Landscaping | Seasonal windows close fast |
+| General construction | Long cycles die without a chase |
+| HVAC / Plumbing / Electrical | Urgency fades unless someone checks in |
+| Flooring · Concrete · Windows · Fencing · Remodeling · Pest | Vertical playbooks included |
 
-## Setup
+## Pricing ($500 – $1,500 / mo)
+
+| Plan | Price | Best for |
+| --- | --- | --- |
+| **Starter** | **$500/mo** | Solo operators, ~50 open estimates, 1 trade playbook |
+| **Growth** | **$997/mo** | Crews closing harder — 3 trades, 200 estimates, reports |
+| **Scale** | **$1,500/mo** | Multi-crew shops — unlimited, custom sequences, onboarding |
+
+## Features
+
+- Public **Register company** link for ads / catalogues / social
+- Login per company account
+- Add clients/estimates in ~30 seconds after the site visit
+- Auto **WhatsApp + email** on Day 0 / 2 / 5 / 10
+- Day 5 & Day 10 **call scripts** on the dashboard
+- Trade-specific copy
+- Mark **won / lost / paused** — pending follow-ups stop
+- Step-by-step guide + advert/catalogue copy pages
+- Optional Twilio WhatsApp + SMTP email (logs only until configured)
+
+## Quick start
+
+You must run these commands **inside the project folder** (the folder that contains `requirements.txt` and `closeloop/`).  
+If you are in `C:\Users\...` alone, Python cannot find the app.
+
+### 1) Get the code
+
+```powershell
+cd $HOME
+git clone https://github.com/DeanMash/DeanMash.git CloseLoop
+cd CloseLoop
+git checkout cursor/contractor-closeloop-followup
+```
+
+Confirm:
+
+```powershell
+dir requirements.txt
+dir closeloop
+```
+
+### 2) Windows (PowerShell)
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
+# If you ran an older build, reset the DB once:
+# Remove-Item closeloop.db -ErrorAction SilentlyContinue
+python -m closeloop web
+```
+
+If activation is blocked:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+### 3) Mac / Linux
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
+# rm -f closeloop.db   # only if upgrading from an older schema
+python -m closeloop web
 ```
+
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000)
+
+| Page | URL |
+| --- | --- |
+| Landing | `/` |
+| **Public company registration** | **`/register`** (also `/start`) |
+| Step-by-step guide | `/guide` |
+| Social + catalogue ads | `/advertise` |
+| Login | `/login` |
+| Dashboard | `/dashboard` |
+| Add client | `/estimates/new` |
+
+Demo login (when `SEED_DEMO=true`): `demo@closeloop.local` / `demo1234`
+
+### Process due follow-ups once (CLI)
+
+```bash
+python -m closeloop run-followups
+```
+
+The web app also runs this every 15 minutes, and the dashboard has **Run due follow-ups now**. Saving a new client also fires any due messages immediately (including Day 0 welcome).
+
+## Configure WhatsApp + email
 
 Edit `.env`:
 
-1. Create an app / note an `app_id` at [developers.deriv.com](https://developers.deriv.com/)
-2. Create an API token in your Deriv account (read access is enough)
-3. Put both values in `.env`
-4. Optional: Telegram + dashboard token settings
+```env
+APP_BASE_URL=https://your-domain.com
 
-Recommended: use a **demo** Deriv token while testing.
+TWILIO_ACCOUNT_SID=...
+TWILIO_AUTH_TOKEN=...
+TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
 
-## Run
-
-```bash
-python -m deriv_advisor            # one-shot CLI
-python -m deriv_advisor web        # web dashboard
-python -m deriv_advisor telegram   # Telegram bot
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=...
+SMTP_PASSWORD=...
+SMTP_FROM=followups@yourdomain.com
 ```
 
-Verbose:
+Without these, messages are **logged** (safe for demos) instead of sent.
 
-```bash
-python -m deriv_advisor -v web
-```
+Put your live registration link on posters:
 
-## Bot commands
-
-| Command | Action |
-| --- | --- |
-| `/start` | Help / welcome |
-| `/suggest` | Analyze and send ideas |
-| `/ideas` | Same as `/suggest` |
-| `/chatid` | Show your Telegram chat id |
-
-## Output
-
-- Account snapshot (demo/real, balance)
-- News tone summary + sample headlines
-- Ranked suggestions like `R_100 → CALL | confidence 72.5%`
-- Reasons for each suggestion
-
-Only ideas above `MIN_CONFIDENCE` (default `55`) are shown.
+`https://your-domain.com/register`
 
 ## Tests
 
 ```bash
-pip install pytest
+pip install -r requirements.txt
 pytest -q
 ```
 
-## Important
+## Note on this repo
 
-- Suggestions are heuristics, not financial advice.
-- Synthetic indices are not driven by news the way FX/stocks are; news only applies a small confidence nudge.
-- Set `DASHBOARD_TOKEN` and `TELEGRAM_ALLOWED_CHAT_IDS` so strangers cannot use your Deriv connection.
-- Keep auto-trading off until you have reviewed many suggestion cycles on demo.
-
-## Next step (later)
-
-Optional: scheduled alerts, or gated auto-trade with hard risk limits.
+Older `deriv_advisor` code may still exist. **CloseLoop** (`closeloop/`) is the active product.

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Add client / estimate — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:1rem;">
+  <h2>Add a client after the estimate</h2>
+  <p class="sub">
+    Enter the homeowner once. {{ app_name }} immediately starts WhatsApp + email follow-ups
+    (Day 0 welcome), then Day 2, Day 5, and Day 10 automatically.
+  </p>
+  {% if welcome %}
+  <div class="flash">Company registered. Add your first client below — follow-ups start as soon as you save.</div>
+  {% endif %}
+  <div class="card card-pad" style="max-width:800px;">
+    <form class="form" method="post" action="/estimates">
+      <div class="form-row">
+        <label>Client / homeowner name
+          <input name="homeowner_name" required placeholder="Paula Nguyen" />
+        </label>
+        <label>Job / scope title
+          <input name="job_title" placeholder="Full tear-off architectural shingles" />
+        </label>
+      </div>
+      <div class="form-row">
+        <label>WhatsApp number
+          <input name="homeowner_phone" placeholder="+15551234567" />
+        </label>
+        <label>Email
+          <input name="homeowner_email" type="email" placeholder="homeowner@email.com" />
+        </label>
+      </div>
+      <div class="form-row">
+        <label>Property address
+          <input name="address" placeholder="18 Cedar Lane" />
+        </label>
+        <label>Estimate amount ($)
+          <input name="amount" type="number" step="0.01" min="0" value="0" />
+        </label>
+      </div>
+      <div class="form-row">
+        <label>Trade playbook
+          <select name="trade_key">
+            {% for t in trades %}
+            <option value="{{ t.key }}" {% if t.key == business.trade_key %}selected{% endif %}>
+              {{ t.emoji }} {{ t.label }}
+            </option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Quoted on
+          <input name="quoted_on" type="date" value="{{ today }}" />
+        </label>
+      </div>
+      <label>Notes
+        <textarea name="notes" placeholder="Insurance claim, prefers weekend start, comparing 2 other bids…"></textarea>
+      </label>
+      <button class="btn btn-primary" type="submit">Save client & start auto follow-ups</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
