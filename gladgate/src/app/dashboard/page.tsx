@@ -1,9 +1,10 @@
 import { getDemoSnapshot } from "@/lib/store";
-import DashboardClient from "./DashboardClient";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+/** Legacy demo route → seeded Amanzi Grill business dashboard. */
 export default function DashboardPage() {
-  const initial = getDemoSnapshot();
-  return <DashboardClient initialData={initial} />;
+  const snap = getDemoSnapshot();
+  redirect(snap.business.dashboardPath);
 }

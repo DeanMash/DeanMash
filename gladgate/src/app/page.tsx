@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { PLANS } from "@/lib/pricing";
+import { TRIAL_OFFERS } from "@/lib/trials";
 import { VERTICALS } from "@/lib/verticals";
 import styles from "./page.module.css";
 
@@ -11,10 +12,10 @@ export default function HomePage() {
         <div className={styles.brand}>GladGate</div>
         <nav className={styles.navLinks}>
           <a href="#how">How it works</a>
-          <a href="#businesses">Businesses</a>
-          <a href="#pricing">Pricing</a>
-          <Link className={styles.navCta} href="/dashboard">
-            Open demo
+          <a href="#pricing">$3 EcoCash</a>
+          <Link href="/trial">Trial codes</Link>
+          <Link className={styles.navCta} href="/register">
+            Register shop
           </Link>
         </nav>
       </header>
@@ -34,19 +35,19 @@ export default function HomePage() {
         <div className={styles.heroCopy}>
           <p className={styles.heroBrand}>GladGate</p>
           <h1 className={styles.heroHeadline}>
-            Ask every happy customer. Stop one-star essays at the gate.
+            Register. Get your QR. Mashtech posts the glad reviews.
           </h1>
           <p className={styles.heroSupport}>
-            WhatsApp-first review routing for shops that cannot afford a public
-            meltdown overnight.
+            Small shops in Zimbabwe: $3 / month on EcoCash. Automatic customer
+            follow-ups. Bad reviews stay private.
           </p>
           <div className={styles.ctaRow}>
-            <Link className={styles.btnPrimary} href="/dashboard">
-              Try the live demo
+            <Link className={styles.btnPrimary} href="/register?code=MASHTECH14">
+              Start free trial
             </Link>
-            <a className={styles.btnGhost} href="#pricing">
-              See $500–$1,500 plans
-            </a>
+            <Link className={styles.btnGhost} href="/trial">
+              Trial codes & links
+            </Link>
           </div>
         </div>
       </section>
@@ -54,39 +55,39 @@ export default function HomePage() {
       <section className={styles.section} id="how">
         <div className={styles.sectionNarrow}>
           <div className={styles.sectionHead}>
-            <h2>Happy voices go public. Hurt feelings stay private.</h2>
+            <h2>Your link and QR become the review desk.</h2>
             <p>
-              Most owners never ask for reviews. Angry customers still write
-              them — at midnight. GladGate flips that.
+              Register once. Print the QR. GladGate checks in with customers and
+              Mashtech shares the happy ones on social — tagging your page.
             </p>
           </div>
           <div className={styles.problem}>
             <blockquote className={styles.quote}>
               Unhappy clients write one-star essays at midnight. GladGate asks
-              the quiet majority while they still feel good — and flags risk
-              before anything goes live.
-              <span>Built for Zimbabwe and similar markets where WhatsApp is the shop floor.</span>
+              registered customers automatically — and only the glad voices go
+              public through Mashtech.
+              <span>Powered by Mashtech · EcoCash $3 / month after trial.</span>
             </blockquote>
             <div className={styles.flow}>
               <div className={styles.flowStep}>
-                <strong>1. Auto-ask after the visit</strong>
+                <strong>1. Register your company</strong>
                 <p>
-                  POS, booking, or staff tap sends a WhatsApp (or SMS) pulse:
-                  “How did we do today?”
+                  Get a unique review link and QR code for your counter, till, or
+                  WhatsApp status.
                 </p>
               </div>
               <div className={styles.flowStep}>
-                <strong>2. Route the glad ones</strong>
+                <strong>2. Automatic checks & follow-ups</strong>
                 <p>
-                  Scores of 4–5 with clean language get a one-tap path to Google
-                  or Facebook.
+                  Every registered customer gets scheduled WhatsApp/SMS pulses.
+                  No more hoping people remember to review.
                 </p>
               </div>
               <div className={styles.flowStep}>
-                <strong>3. Hold the hurt ones</strong>
+                <strong>3. Mashtech posts the glad ones</strong>
                 <p>
-                  Low scores and complaint language never post publicly. Owners
-                  get an alert and a recovery path first.
+                  4–5★ clean reviews are queued for Mashtech to post, tagging
+                  your Facebook page. Low scores stay private.
                 </p>
               </div>
             </div>
@@ -97,10 +98,10 @@ export default function HomePage() {
       <section className={styles.section} id="businesses">
         <div className={styles.sectionNarrow}>
           <div className={styles.sectionHead}>
-            <h2>Built for the businesses that live on reputation.</h2>
+            <h2>Built for everyday Zimbabwe shops.</h2>
             <p>
-              Restaurants, workshops, salons, and the everyday shops that carry
-              neighbourhood trust across developing markets.
+              Restaurants, workshops, salons, pharmacies, lodges, clinics,
+              hardware counters, and car washes.
             </p>
           </div>
           <div className={styles.verticalGrid}>
@@ -118,10 +119,10 @@ export default function HomePage() {
       <section className={styles.section} id="pricing">
         <div className={styles.sectionNarrow}>
           <div className={styles.sectionHead}>
-            <h2>Pricing that matches a reputation budget.</h2>
+            <h2>$3 on EcoCash. Trial codes before launch.</h2>
             <p>
-              $500 to $1,500 per month in USD — billable by bank transfer or
-              EcoCash for Zimbabwe operators.
+              Launch price for small companies. Use a trial code now — pay EcoCash
+              when you go live.
             </p>
           </div>
           <div className={styles.pricingGrid}>
@@ -129,7 +130,7 @@ export default function HomePage() {
               <article
                 key={plan.id}
                 className={`${styles.plan} ${
-                  plan.id === "street" ? styles.planFeatured : ""
+                  plan.highlighted ? styles.planFeatured : ""
                 }`}
               >
                 <div className={styles.planName}>{plan.name}</div>
@@ -140,7 +141,7 @@ export default function HomePage() {
                 <p className={styles.planMeta}>
                   {plan.tagline}
                   <br />
-                  {plan.locations} · {plan.bestFor}
+                  {plan.currencyLabel} · {plan.locations}
                 </p>
                 <ul>
                   {plan.features.map((feature) => (
@@ -149,31 +150,49 @@ export default function HomePage() {
                 </ul>
                 <Link
                   className={
-                    plan.id === "street" ? styles.btnPrimary : styles.btnDark
+                    plan.highlighted ? styles.btnPrimary : styles.btnDark
                   }
-                  href="/dashboard"
+                  href={
+                    plan.id === "ecocash_starter"
+                      ? "/register?code=MASHTECH14"
+                      : "/register"
+                  }
                 >
-                  Start with demo
+                  Register shop
                 </Link>
               </article>
             ))}
           </div>
-          <p className={styles.marketNote}>
-            Designed for multi-staff restaurants, panel beaters, salon groups,
-            pharmacies, lodges, clinics, hardware counters, and car washes in
-            Zimbabwe, Zambia, Botswana, Malawi, and similar markets — where a
-            public one-star can cost more than a month of GladGate.
-          </p>
+
+          <div className={styles.sectionHead} style={{ marginTop: "2.5rem" }}>
+            <h2>Pre-launch trial codes</h2>
+            <p>Share these links with shops before billing goes live.</p>
+          </div>
+          <div className={styles.flow}>
+            {TRIAL_OFFERS.map((trial) => (
+              <div key={trial.code} className={styles.flowStep}>
+                <strong>
+                  {trial.code} · {trial.days} days
+                </strong>
+                <p>
+                  {trial.description}{" "}
+                  <Link href={trial.registerPath}>{trial.registerPath}</Link>
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       <footer className={styles.footer}>
         <div>
-          <strong>GladGate</strong>
-          <div>Ask happy. Hold hurt. Grow stars.</div>
+          <strong>GladGate by Mashtech</strong>
+          <div>Ask happy. Hold hurt. Post glad reviews.</div>
         </div>
         <div>
-          <Link href="/dashboard">Live demo dashboard →</Link>
+          <Link href="/register">Register →</Link>
+          {" · "}
+          <Link href="/b/amanzi-grill/dashboard">Sample dashboard →</Link>
         </div>
       </footer>
     </div>

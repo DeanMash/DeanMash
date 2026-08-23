@@ -15,9 +15,9 @@ const figtree = Figtree({
 });
 
 export const metadata: Metadata = {
-  title: "GladGate — Ask happy customers. Hold bad reviews private.",
+  title: "GladGate by Mashtech — $3 EcoCash review QR for small shops",
   description:
-    "WhatsApp-first review gating for restaurants, auto shops, salons, and small businesses across Zimbabwe and developing markets. $500–$1,500/month.",
+    "Register your shop, get a review link and QR code. Automatic customer follow-ups. Mashtech posts happy reviews tagging your page. $3/month on EcoCash.",
 };
 
 export default function RootLayout({

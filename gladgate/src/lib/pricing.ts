@@ -4,58 +4,65 @@ export interface Plan {
   id: PlanId;
   name: string;
   priceUsd: number;
+  currencyLabel: string;
   tagline: string;
   locations: string;
   features: string[];
   bestFor: string;
+  highlighted?: boolean;
 }
 
+/** Launch plan for small Zimbabwe shops — EcoCash $3 / month via Mashtech. */
+export const ECOCASH_PLAN: Plan = {
+  id: "ecocash_starter",
+  name: "EcoCash Starter",
+  priceUsd: 3,
+  currencyLabel: "USD via EcoCash",
+  tagline: "Register, get your link + QR, Mashtech posts happy reviews.",
+  locations: "1 location",
+  bestFor: "Restaurants, salons, workshops, pharmacies, lodges",
+  highlighted: true,
+  features: [
+    "Company registration with unique review link + QR code",
+    "Customers scan QR → your GladGate review page",
+    "Automatic checks & WhatsApp/SMS follow-ups",
+    "Happy reviews posted by Mashtech tagging your page",
+    "Bad reviews held private for owner recovery",
+    "$3 / month on EcoCash",
+  ],
+};
+
+/** Kept for enterprise upsell demos; launch default is EcoCash Starter. */
 export const PLANS: Plan[] = [
+  ECOCASH_PLAN,
   {
     id: "neighborhood",
-    name: "Neighborhood",
-    priceUsd: 500,
-    tagline: "One busy shop. Every happy walk-out asked.",
+    name: "Neighborhood+",
+    priceUsd: 15,
+    currencyLabel: "USD",
+    tagline: "Busier shops that need SMS fallback and weekly digests.",
     locations: "1 location",
-    bestFor: "Single restaurant, salon, or workshop",
+    bestFor: "High-volume cafés and busy workshops",
     features: [
-      "WhatsApp pulse asks after every visit",
-      "Happy customers routed to Google / Facebook",
-      "Unhappy feedback held private + owner SMS",
-      "Complaint keyword flagging",
-      "USD or EcoCash billing",
+      "Everything in EcoCash Starter",
+      "SMS fallback when WhatsApp fails",
+      "Weekly reputation digest",
+      "Priority Mashtech posting window",
     ],
   },
   {
     id: "street",
-    name: "Street Smart",
-    priceUsd: 900,
-    tagline: "Staff on shift. Reviews on rails.",
+    name: "Multi-shop",
+    priceUsd: 35,
+    currencyLabel: "USD",
+    tagline: "Up to 3 locations under one Mashtech account.",
     locations: "Up to 3 locations",
-    bestFor: "Growing auto shops, salon chains, popular cafés",
+    bestFor: "Salon chains and multi-bay auto shops",
     features: [
-      "Everything in Neighborhood",
-      "SMS fallback when WhatsApp fails",
-      "Staff performance on ask completion",
-      "Weekly reputation digest (WhatsApp)",
-      "Recovery playbooks for flagged visits",
-      "Priority onboarding in Zimbabwe & region",
-    ],
-  },
-  {
-    id: "citywide",
-    name: "Citywide",
-    priceUsd: 1500,
-    tagline: "Multi-site reputation, one control room.",
-    locations: "Up to 10 locations",
-    bestFor: "Lodge groups, pharmacy networks, multi-bay workshops",
-    features: [
-      "Everything in Street Smart",
-      "Multi-location dashboard & manager alerts",
-      "Custom public review destinations",
-      "Monthly coaching call",
-      "API / POS webhook triggers",
-      "Brand protection review before anything goes public",
+      "Everything in Neighborhood+",
+      "Multi-location dashboard",
+      "Staff ask completion tracking",
+      "Recovery playbooks",
     ],
   },
 ];
@@ -65,3 +72,9 @@ export function getPlan(id: PlanId): Plan {
   if (!found) throw new Error(`Unknown plan: ${id}`);
   return found;
 }
+
+export const ECOCASH_MERCHANT = {
+  name: "Mashtech GladGate",
+  shortCodeHint: "Pay $3 to Mashtech GladGate on EcoCash",
+  amountUsd: 3,
+};

@@ -1,8 +1,4 @@
-# GladGate web app
-
-Next.js demo for GladGate — WhatsApp-first review gating for small businesses.
-
-Run each command on its own line (especially on Windows PowerShell, which rejects `&&` on older versions):
+# GladGate web app (Mashtech)
 
 ```powershell
 npm install
@@ -10,21 +6,21 @@ npm run build
 npm start
 ```
 
-Or for hot reload during development:
+Open http://localhost:3000
 
-```powershell
-npm install
-npm run dev
-```
-
-Then open http://localhost:3000
+| Path | Purpose |
+| --- | --- |
+| `/register?code=MASHTECH14` | Register shop with trial |
+| `/trial` | Pre-launch codes & links |
+| `/b/[slug]` | Public review page (QR target) |
+| `/b/[slug]/dashboard` | Owner dashboard: QR, customers, Mashtech queue |
 
 | Script | Purpose |
 | --- | --- |
-| `npm run dev` | Local app at http://localhost:3000 |
-| `npm start` | Production server (after `npm run build`) |
-| `npm test` | Review-gate engine tests |
+| `npm run dev` | Hot reload |
+| `npm start` | Production (after build) |
+| `npm test` | Engine + trial + Mashtech tests |
 | `npm run lint` | ESLint |
 | `npm run build` | Production build |
 
-See the [root README](../README.md) for product positioning and pricing.
+See the [root README](../README.md) for EcoCash pricing and trial codes.

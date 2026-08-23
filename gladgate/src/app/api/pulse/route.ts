@@ -42,7 +42,13 @@ export async function POST(request: Request) {
         ? publicPrompt(result.businessName)
         : privatePrompt(result.businessName);
 
-    return NextResponse.json({ ...result, message });
+    return NextResponse.json({
+      ...result,
+      message,
+      mashtechNote: result.mashtechTagged
+        ? "Mashtech queued a social post tagging this business."
+        : undefined,
+    });
   } catch {
     return NextResponse.json({ error: "Pulse not found" }, { status: 404 });
   }

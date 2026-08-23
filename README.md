@@ -1,41 +1,30 @@
-# GladGate
+# GladGate by Mashtech
 
-**Ask every happy customer. Hold bad reviews before they go public.**
+**Register your shop → get a review link + QR → Mashtech posts happy reviews tagging your page.**
 
-GladGate is a WhatsApp-first review gating system for restaurants, auto repair shops, salons, pharmacies, lodges, clinics, hardware shops, car washes, and similar small businesses — especially in developing markets like Zimbabwe.
+For small companies in Zimbabwe and similar markets: **$3 / month on EcoCash**.
 
-Unhappy clients write one-star essays at midnight. GladGate asks the quiet majority while they still feel good, routes praise to Google/Facebook, and flags risky feedback for private recovery.
+## Pre-launch trial codes
 
-## Pricing (USD / month)
-
-| Plan | Price | Fit |
+| Code | Days | Register link |
 | --- | --- | --- |
-| Neighborhood | **$500** | 1 location |
-| Street Smart | **$900** | Up to 3 locations |
-| Citywide | **$1,500** | Up to 10 locations |
+| `MASHTECH14` | 14 | `/register?code=MASHTECH14` |
+| `GLADLAUNCH` | 30 | `/register?code=GLADLAUNCH` |
+| `ECOCASH3` | 30 | `/register?code=ECOCASH3` |
+| `DEMOQR` | 7 | `/register?code=DEMOQR` |
 
-Billing designed for USD bank transfer or EcoCash-style collection in Zimbabwe and the region.
+Or open `/trial` in the app for the full list.
 
-## Product flow
+## What you get
 
-1. After a visit, GladGate auto-asks via **WhatsApp** (SMS fallback).
-2. Score **4–5** with clean language → one-tap **public review** link.
-3. Low scores or complaint / refund / safety language → **held private**, owner alerted, never posted automatically.
+1. Company registration
+2. Unique review URL + printable QR code
+3. Customer registry with automatic WhatsApp/SMS follow-ups
+4. Happy reviews queued for **Mashtech** social posting (tags your Facebook page)
+5. Bad / risky reviews held private for owner recovery
+6. EcoCash $3 / month activation (demo confirmation until live billing)
 
-## App
-
-From the repo root (after clone), run commands **one line at a time**.
-
-**macOS / Linux (bash):**
-
-```bash
-cd gladgate
-npm install
-npm run build
-npm start
-```
-
-**Windows PowerShell:**
+## Run (Windows PowerShell — one line at a time)
 
 ```powershell
 cd gladgate
@@ -44,34 +33,29 @@ npm run build
 npm start
 ```
 
-For local development with hot reload, use `npm run dev` instead of `build` + `start`.
+Or for development:
 
-Open [http://localhost:3000](http://localhost:3000).
+```powershell
+cd gladgate
+npm install
+npm run dev
+```
 
-- `/` — marketing site
-- `/dashboard` — live demo control room (send asks, watch flags)
-- `/feedback/[id]` — customer pulse reply (opened from dashboard)
+Open http://localhost:3000
 
-> PowerShell tip: older Windows PowerShell does not support `&&`. Run each command on its own line, or use `;` between commands (for example `cd gladgate; npm install`).
+### Useful URLs
+
+- `/` — marketing
+- `/register?code=MASHTECH14` — register with trial
+- `/trial` — all trial codes & links
+- `/b/amanzi-grill` — sample public review page (QR target)
+- `/b/amanzi-grill/dashboard` — sample owner dashboard with QR
 
 ## Tests
 
-```bash
+```powershell
 cd gladgate
 npm test
 npm run lint
 npm run build
 ```
-
-## Demo script
-
-1. Open `/dashboard`
-2. Click **Auto-ask 3 via WhatsApp**
-3. Open a customer reply link
-4. Try a 5★ clean note → routed public
-5. Try a 2★ note with “terrible” / “refund” → flagged private
-
-## Stack
-
-- Next.js (App Router) + TypeScript
-- In-memory demo store + review gating engine (`src/lib/engine.ts`)

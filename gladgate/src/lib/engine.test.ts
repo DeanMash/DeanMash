@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { decideDisposition, detectFlags, scoreIsHappy } from "./engine";
+import { findTrial } from "./trials";
+import { buildMashtechPost } from "./social";
+import type { Business, CustomerPulse } from "./types";
 
 describe("GladGate review gate", () => {
   it("treats 4+ as happy when language is clean", () => {
@@ -35,5 +38,34 @@ describe("GladGate review gate", () => {
     assert.ok(refund.includes("refund_threat"));
     const safety = detectFlags(1, "Possible food poisoning after dinner");
     assert.ok(safety.includes("safety_concern"));
+  });
+});
+
+describe("Trials and Mashtech posting", () => {
+  it("resolves pre-launch trial codes", () => {
+    assert.equal(findTrial("mashtech14")?.days, 14);
+    assert.equal(findTrial("GLADLAUNCH")?.registerPath, "/register?code=GLADLAUNCH");
+    assert.equal(findTrial("NOPE"), undefined);
+  });
+
+  it("builds a Mashtech social post that tags the business", () => {
+    const business = {
+      id: "biz_1",
+      slug: "amanzi-grill",
+      name: "Amanzi Grill",
+      facebookHandle: "@AmanziGrillHre",
+    } as Business;
+    const pulse = {
+      id: "pulse_1",
+      customerName: "Tendai",
+      rating: 5,
+      comment: "Great sadza",
+    } as CustomerPulse;
+
+    const post = buildMashtechPost(business, pulse);
+    assert.match(post.body, /Mashtech/);
+    assert.match(post.body, /@AmanziGrillHre/);
+    assert.match(post.body, /Great sadza/);
+    assert.equal(post.tagHandle, "@AmanziGrillHre");
   });
 });
