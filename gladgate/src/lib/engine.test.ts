@@ -66,6 +66,8 @@ describe("Trials and Mashtech posting", () => {
     assert.match(post.body, /Mashtech/);
     assert.match(post.body, /@AmanziGrillHre/);
     assert.match(post.body, /Great sadza/);
+    assert.match(post.readyCaption, /Great sadza/);
     assert.equal(post.tagHandle, "@AmanziGrillHre");
+    assert.equal(post.kind, "review");
   });
 });

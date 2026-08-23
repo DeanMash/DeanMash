@@ -74,10 +74,22 @@ npm start
 
 For hot reload during development, use `npm run dev` instead of `build` + `start`.
 
+## Mashtech dashboard
+
+After a shop registers, the system **forwards to `/mashtech`** where:
+
+- **All projects** (registered shops) are listed
+- A **launch post** is auto-created for each new project (ready to copy/publish)
+- Happy reviews auto-create **review posts** tagging the shop’s page
+- Mashtech can **copy captions**, **mark published**, or **publish all queued**
+- Pending EcoCash payments can be **confirmed** (activates monthly plan)
+
+Open: http://localhost:3000/mashtech
+
 ### Useful URLs
 
-- `/` — marketing
-- `/register?code=MASHTECH14` — register with trial
+- `/mashtech` — Mashtech control room (all projects + auto posts)
+- `/register?code=MASHTECH14` — register with trial (then forwards to Mashtech)
 - `/trial` — all trial codes & links
 - `/b/amanzi-grill` — sample public review page (QR target)
 - `/b/amanzi-grill/dashboard` — sample owner dashboard with QR

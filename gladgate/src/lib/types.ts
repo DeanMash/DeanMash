@@ -119,12 +119,15 @@ export interface SocialPost {
   id: string;
   businessId: string;
   pulseId: string;
+  kind: "launch" | "review";
   platform: "facebook" | "whatsapp_status";
   body: string;
   tagHandle: string;
   status: "queued" | "posted" | "failed";
   createdAt: string;
   postedAt?: string;
+  /** Ready-to-paste caption for Facebook / WhatsApp Status */
+  readyCaption: string;
 }
 
 export interface FollowUpJob {

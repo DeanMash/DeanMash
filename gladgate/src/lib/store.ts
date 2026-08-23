@@ -8,7 +8,7 @@ import {
 } from "./billing";
 import { decideDisposition } from "./engine";
 import { nextFollowUpAt, isDue } from "./followups";
-import { createQueuedPost, markPosted } from "./social";
+import { createQueuedPost, createLaunchPost, markPosted } from "./social";
 import { findTrial, trialEndsAt } from "./trials";
 import type {
   AskBatchResult,
@@ -82,13 +82,15 @@ function seedBusiness(): Business {
 }
 
 function defaultState(): AppState {
+  const business = seedBusiness();
+  const launchPost = createLaunchPost(business);
   return {
-    businesses: [seedBusiness()],
+    businesses: [business],
     payments: [],
     customers: [],
     pulses: [],
     flagged: [],
-    socialPosts: [],
+    socialPosts: [launchPost],
   };
 }
 
@@ -135,6 +137,8 @@ export function registerBusiness(input: RegisterInput): {
   business: Business;
   trialApplied: boolean;
   message: string;
+  launchPost: SocialPost;
+  mashtechPath: string;
 } {
   const state = getState();
   const name = input.name.trim();
@@ -154,8 +158,8 @@ export function registerBusiness(input: RegisterInput): {
   const trialDays = trial?.days ?? DEFAULT_FREE_TRIAL_DAYS;
   const trialEnds = trialEndsAt(trialDays, now);
   const message = trial
-    ? `One free trial activated (${trial.code}, ${trialDays} days). Pay $3 EcoCash after trial — monthly billing starts only when Mashtech confirms payment.`
-    : `One free trial activated (${trialDays} days). Your link and QR are ready. EcoCash $3/month starts only after payment confirmation.`;
+    ? `One free trial activated (${trial.code}, ${trialDays} days). Project forwarded to Mashtech dashboard — launch post auto-created.`
+    : `One free trial activated (${trialDays} days). Project forwarded to Mashtech dashboard — launch post auto-created.`;
 
   const business: Business = {
     id: uid("biz"),
@@ -179,13 +183,22 @@ export function registerBusiness(input: RegisterInput): {
     createdAt: now.toISOString(),
   };
 
-  // Ensure facebook handle has @
   if (!business.facebookHandle.startsWith("@")) {
     business.facebookHandle = `@${business.facebookHandle}`;
   }
 
   state.businesses.unshift(business);
-  return { business, trialApplied: Boolean(trial), message };
+
+  const launchPost = createLaunchPost(business);
+  state.socialPosts.unshift(launchPost);
+
+  return {
+    business,
+    trialApplied: Boolean(trial),
+    message,
+    launchPost,
+    mashtechPath: `/mashtech?project=${business.slug}`,
+  };
 }
 
 export function getBusinessSnapshot(slug: string) {
@@ -467,6 +480,94 @@ export function publishSocialQueue(businessSlug: string) {
   return { posted: posted.length, posts: posted };
 }
 
+export function publishPostById(postId: string) {
+  const state = getState();
+  const post = state.socialPosts.find((p) => p.id === postId);
+  if (!post) throw new Error("Post not found");
+  if (post.status === "posted") return post;
+  Object.assign(post, markPosted(post));
+  return post;
+}
+
+export function publishAllQueuedPosts() {
+  const state = getState();
+  const posted: SocialPost[] = [];
+  for (const post of state.socialPosts) {
+    if (post.status === "queued") {
+      Object.assign(post, markPosted(post));
+      posted.push(post);
+    }
+  }
+  return { posted: posted.length, posts: posted };
+}
+
+export function getMashtechSnapshot() {
+  const state = getState();
+  for (const b of state.businesses) {
+    syncSubscriptionStatus(b);
+  }
+
+  const projects = listBusinesses().map((business) => {
+    const posts = state.socialPosts.filter((p) => p.businessId === business.id);
+    const payments = state.payments.filter((p) => p.businessId === business.id);
+    const pulses = state.pulses.filter((p) => p.businessId === business.id);
+    const flagged = state.flagged.filter(
+      (f) => f.businessId === business.id && f.status !== "resolved",
+    );
+    return {
+      business,
+      stats: {
+        postsQueued: posts.filter((p) => p.status === "queued").length,
+        postsLive: posts.filter((p) => p.status === "posted").length,
+        reviews: pulses.filter((p) => p.rating).length,
+        flaggedOpen: flagged.length,
+        paymentsPending: payments.filter((p) => p.status === "pending").length,
+      },
+    };
+  });
+
+  const posts = [...state.socialPosts]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((post) => {
+      const business = getBusinessById(post.businessId);
+      return {
+        ...post,
+        businessName: business?.name ?? "Unknown",
+        businessSlug: business?.slug ?? "",
+        reviewPath: business?.reviewPath ?? "",
+        facebookHandle: business?.facebookHandle ?? post.tagHandle,
+      };
+    });
+
+  const pendingPayments = state.payments
+    .filter((p) => p.status === "pending")
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((payment) => {
+      const business = getBusinessById(payment.businessId);
+      return {
+        ...payment,
+        businessName: business?.name ?? "Unknown",
+        businessSlug: business?.slug ?? "",
+      };
+    });
+
+  return {
+    projects,
+    posts,
+    pendingPayments,
+    stats: {
+      projects: projects.length,
+      postsQueued: posts.filter((p) => p.status === "queued").length,
+      postsLive: posts.filter((p) => p.status === "posted").length,
+      paymentsPending: pendingPayments.length,
+      trials: projects.filter((p) => p.business.subscriptionStatus === "trial")
+        .length,
+      active: projects.filter((p) => p.business.subscriptionStatus === "active")
+        .length,
+    },
+  };
+}
+
 export function updateFlagStatus(
   flagId: string,
   status: FlaggedReview["status"],
@@ -615,14 +716,4 @@ export function confirmEcoCashPayment(input: {
   business.trialEndsAt = undefined;
 
   return { payment, business, alreadyConfirmed: false };
-}
-
-/** @deprecated Use confirmEcoCashPayment after webhook confirmation */
-export function activateEcoCash(input: {
-  businessSlug: string;
-  ecocashNumber: string;
-}) {
-  throw new Error(
-    "Monthly EcoCash activation requires payment confirmation. Request payment first, then Mashtech confirms via webhook.",
-  );
 }

@@ -15,7 +15,7 @@ import {
 describe("EcoCash billing — payment confirmation required", () => {
   it("grants exactly one free trial at registration", () => {
     resetStore();
-    const { business, message } = registerBusiness({
+    const { business, message, launchPost, mashtechPath } = registerBusiness({
       name: "Test Shop",
       vertical: "salon",
       city: "Harare",
@@ -29,6 +29,10 @@ describe("EcoCash billing — payment confirmation required", () => {
     assert.ok(business.trialEndsAt);
     assert.ok(isTrialActive(business));
     assert.match(message, /One free trial/);
+    assert.equal(launchPost.kind, "launch");
+    assert.equal(launchPost.status, "queued");
+    assert.match(launchPost.readyCaption, /Test Shop/);
+    assert.equal(mashtechPath, `/mashtech?project=${business.slug}`);
   });
 
   it("does not activate monthly plan until payment is confirmed", () => {
