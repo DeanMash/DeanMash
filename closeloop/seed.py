@@ -20,6 +20,8 @@ def seed_demo(db: Session) -> Business:
         owner_name="Marcus Hill",
         phone="(555) 014-2200",
         email="marcus@summitshield.example",
+        login_email="demo@closeloop.local",
+        password="demo1234",
         trade_key="roofing",
         plan_key="growth",
     )
@@ -88,7 +90,8 @@ def seed_demo(db: Session) -> Business:
     for row in samples:
         status = row.pop("status", None)
         lost_reason = row.pop("lost_reason", "")
-        est = create_estimate(db, biz, **row)
+        # Don't blast welcome messages for every seed row during startup.
+        est = create_estimate(db, biz, send_due_now=False, **row)
         if status:
             set_estimate_status(db, est, status, lost_reason=lost_reason)
 

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class FollowUpCopy:
     day: int
-    channel: str  # sms | email | call_script
+    channel: str  # whatsapp | email | call_script
     subject: str | None
     body: str
     intent: str
@@ -38,12 +38,12 @@ def _seq(
     day10_call: str,
 ) -> tuple[FollowUpCopy, ...]:
     return (
-        FollowUpCopy(2, "sms", None, day2_sms, "soft_check_in"),
+        FollowUpCopy(2, "whatsapp", None, day2_sms, "soft_check_in"),
         FollowUpCopy(2, "email", day2_email_subject, day2_email, "soft_check_in"),
-        FollowUpCopy(5, "sms", None, day5_sms, "value_nudge"),
+        FollowUpCopy(5, "whatsapp", None, day5_sms, "value_nudge"),
         FollowUpCopy(5, "email", day5_email_subject, day5_email, "value_nudge"),
         FollowUpCopy(5, "call_script", "Day 5 call", day5_call, "phone_close"),
-        FollowUpCopy(10, "sms", None, day10_sms, "decision_close"),
+        FollowUpCopy(10, "whatsapp", None, day10_sms, "decision_close"),
         FollowUpCopy(10, "email", day10_email_subject, day10_email, "decision_close"),
         FollowUpCopy(10, "call_script", "Day 10 call", day10_call, "final_close"),
     )
@@ -740,7 +740,7 @@ PRICING_TIERS = (
         "price_label": "$500/mo",
         "blurb": "Solo operators who send 20–50 estimates a month.",
         "features": [
-            "Day 2 / 5 / 10 SMS + email sequences",
+            "Day 2 / 5 / 10 WhatsApp + email sequences",
             "1 trade playbook",
             "Up to 50 open estimates",
             "Pipeline dashboard",

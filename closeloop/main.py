@@ -15,7 +15,7 @@ def main(argv: list[str] | None = None) -> int:
     web.add_argument("--host", default="0.0.0.0")
     web.add_argument("--port", type=int, default=8000)
 
-    run = sub.add_parser("run-followups", help="Process due SMS/email follow-ups once")
+    run = sub.add_parser("run-followups", help="Process due WhatsApp/email follow-ups once")
     run.add_argument("--date", default="", help="YYYY-MM-DD override (default: today)")
 
     sub.add_parser("seed", help="Seed demo contractor data")

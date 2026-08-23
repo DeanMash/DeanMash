@@ -14,16 +14,24 @@
         <span>{{ app_name }}</span>
       </a>
       <div class="nav-links">
-        <a class="btn btn-ghost btn-sm" href="/#how">How it works</a>
-        <a class="btn btn-ghost btn-sm" href="/#pricing">Pricing</a>
-        <a class="btn btn-secondary btn-sm" href="/dashboard">Dashboard</a>
-        <a class="btn btn-primary btn-sm" href="/estimates/new">+ New estimate</a>
+        <a class="btn btn-ghost btn-sm" href="/guide">How to register</a>
+        <a class="btn btn-ghost btn-sm" href="/advertise">Ads & catalogue</a>
+        {% if business %}
+          <a class="btn btn-secondary btn-sm" href="/dashboard">Dashboard</a>
+          <a class="btn btn-primary btn-sm" href="/estimates/new">+ Add client</a>
+          <form method="post" action="/logout" style="display:inline;">
+            <button class="btn btn-ghost btn-sm" type="submit">Log out</button>
+          </form>
+        {% else %}
+          <a class="btn btn-ghost btn-sm" href="/login">Log in</a>
+          <a class="btn btn-primary btn-sm" href="/register">Register company</a>
+        {% endif %}
       </div>
     </nav>
     {% block content %}{% endblock %}
     <footer class="footer">
-      <strong>{{ app_name }}</strong> closes jobs contractors already quoted —
-      Day 2, Day 5, and Day 10 follow-ups so the homeowner doesn’t ghost you for whoever calls back.
+      <strong>{{ app_name }}</strong> — contractors register via one link, add clients after every quote,
+      and automatic WhatsApp + email follow-ups run on Day 2, Day 5, and Day 10.
     </footer>
   </div>
 </body>

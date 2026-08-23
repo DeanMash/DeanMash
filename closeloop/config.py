@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     twilio_account_sid: str = ""
     twilio_auth_token: str = ""
     twilio_from_number: str = ""
+    # WhatsApp-enabled Twilio sender, e.g. whatsapp:+14155238886
+    twilio_whatsapp_from: str = ""
 
     smtp_host: str = ""
     smtp_port: int = 587
@@ -22,6 +24,8 @@ class Settings(BaseSettings):
     smtp_from: str = "followups@closeloop.local"
 
     seed_demo: bool = True
+    # Public share path clients open to register
+    register_path: str = "/register"
 
 
 @lru_cache

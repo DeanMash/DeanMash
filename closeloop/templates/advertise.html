@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Ads, catalogue & posters — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:1rem;">
+  <h2>Advert pack — social posters & catalogue</h2>
+  <p class="sub">
+    Copy/paste into Meta, TikTok, WhatsApp status, flyers, and printed catalogues.
+    Always point people to: <code style="color:#9fd9ff;">{{ register_url }}</code>
+  </p>
+
+  <div class="card card-pad" style="margin-bottom:1.2rem;">
+    <h3 style="margin-top:0;">Advantages strip (use on any poster)</h3>
+    <div class="grid-3">
+      {% for a in advantages %}
+      <div class="poster-point">
+        <strong>{{ a.title }}</strong>
+        <div class="muted tiny">{{ a.detail }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <h2>Social media posters</h2>
+  <div class="grid-2" style="margin:1rem 0 2rem;">
+    {% for ad in social %}
+    <div class="poster-card">
+      <div class="muted tiny">{{ ad.channel }}</div>
+      <h3>{{ ad.title }}</h3>
+      <div class="poster-headline">{{ ad.headline }}</div>
+      <pre class="poster-body">{{ ad.body }}</pre>
+      <div class="poster-cta">{{ ad.cta }}</div>
+      {% if ad.hashtags %}<div class="muted tiny">{{ ad.hashtags }}</div>{% endif %}
+      <div class="muted tiny" style="margin-top:0.5rem;">Link: {{ register_url }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <h2>Printed catalogue pages</h2>
+  <div class="grid-2" style="margin:1rem 0 2rem;">
+    {% for ad in catalogue %}
+    <div class="poster-card catalogue">
+      <div class="muted tiny">{{ ad.channel }}</div>
+      <h3>{{ ad.title }}</h3>
+      <div class="poster-headline">{{ ad.headline }}</div>
+      <pre class="poster-body">{{ ad.body }}</pre>
+      <div class="poster-cta">{{ ad.cta }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <h2>One-page flyer text</h2>
+  <div class="poster-card" style="margin-top:1rem;">
+    <pre class="poster-body">{{ flyer }}
+
+Register: {{ register_url }}</pre>
+  </div>
+</section>
+{% endblock %}

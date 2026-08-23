@@ -17,13 +17,20 @@ class Business(Base):
     owner_name: Mapped[str] = mapped_column(String(120))
     phone: Mapped[str] = mapped_column(String(40), default="")
     email: Mapped[str] = mapped_column(String(200), default="")
+    login_email: Mapped[str] = mapped_column(String(200), default="", index=True)
+    password_hash: Mapped[str] = mapped_column(String(255), default="")
+    public_slug: Mapped[str] = mapped_column(String(80), default="", index=True)
     trade_key: Mapped[str] = mapped_column(String(64), default="roofing")
     plan_key: Mapped[str] = mapped_column(String(32), default="growth")
     timezone: Mapped[str] = mapped_column(String(64), default="America/New_York")
+    whatsapp_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    email_followup_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    estimates: Mapped[list[Estimate]] = relationship(back_populates="business", cascade="all, delete-orphan")
+    estimates: Mapped[list["Estimate"]] = relationship(
+        back_populates="business", cascade="all, delete-orphan"
+    )
 
 
 class Estimate(Base):
@@ -49,7 +56,7 @@ class Estimate(Base):
     )
 
     business: Mapped[Business] = relationship(back_populates="estimates")
-    follow_ups: Mapped[list[FollowUp]] = relationship(
+    follow_ups: Mapped[list["FollowUp"]] = relationship(
         back_populates="estimate", cascade="all, delete-orphan", order_by="FollowUp.day"
     )
 
@@ -59,13 +66,13 @@ class FollowUp(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     estimate_id: Mapped[int] = mapped_column(ForeignKey("estimates.id"), index=True)
-    day: Mapped[int] = mapped_column(Integer)  # 2, 5, or 10
-    channel: Mapped[str] = mapped_column(String(32))  # sms|email|call_script
+    day: Mapped[int] = mapped_column(Integer)  # 0 welcome, 2, 5, or 10
+    channel: Mapped[str] = mapped_column(String(32))  # whatsapp|email|call_script|sms
     subject: Mapped[str] = mapped_column(String(255), default="")
     body: Mapped[str] = mapped_column(Text, default="")
     intent: Mapped[str] = mapped_column(String(64), default="")
     scheduled_for: Mapped[date] = mapped_column(Date, index=True)
-    status: Mapped[str] = mapped_column(String(32), default="pending")  # pending|sent|skipped|failed
+    status: Mapped[str] = mapped_column(String(32), default="pending")
     sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     error: Mapped[str] = mapped_column(Text, default="")
 

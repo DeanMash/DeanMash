@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Log in — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:1rem;">
+  <h2>Log in to your company</h2>
+  <p class="sub">Use the work email and password from registration.</p>
+  <div class="card card-pad" style="max-width:480px;">
+    {% if error %}<div class="flash" style="background:rgba(255,93,108,0.12);border-color:rgba(255,93,108,0.4);color:#ffb1b9;">{{ error }}</div>{% endif %}
+    <form class="form" method="post" action="/login">
+      <label>Email
+        <input name="email" type="email" required placeholder="you@company.com" />
+      </label>
+      <label>Password
+        <input name="password" type="password" required />
+      </label>
+      <button class="btn btn-primary" type="submit">Log in</button>
+    </form>
+    <p class="muted tiny" style="margin-top:1rem;">
+      New here? <a href="/register">Register your company</a><br/>
+      Demo account (if seeded): <code>demo@closeloop.local</code> / <code>demo1234</code>
+    </p>
+  </div>
+</section>
+{% endblock %}

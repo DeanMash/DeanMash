@@ -1,13 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Log estimate — {{ app_name }}{% endblock %}
+{% block title %}Add client / estimate — {{ app_name }}{% endblock %}
 {% block content %}
 <section class="section" style="padding-top:1rem;">
-  <h2>Log an estimate</h2>
-  <p class="sub">After the site visit — capture it once. {{ app_name }} schedules Day 2, 5, and 10 automatically.</p>
+  <h2>Add a client after the estimate</h2>
+  <p class="sub">
+    Enter the homeowner once. {{ app_name }} immediately starts WhatsApp + email follow-ups
+    (Day 0 welcome), then Day 2, Day 5, and Day 10 automatically.
+  </p>
+  {% if welcome %}
+  <div class="flash">Company registered. Add your first client below — follow-ups start as soon as you save.</div>
+  {% endif %}
   <div class="card card-pad" style="max-width:800px;">
     <form class="form" method="post" action="/estimates">
       <div class="form-row">
-        <label>Homeowner name
+        <label>Client / homeowner name
           <input name="homeowner_name" required placeholder="Paula Nguyen" />
         </label>
         <label>Job / scope title
@@ -15,7 +21,7 @@
         </label>
       </div>
       <div class="form-row">
-        <label>Phone (SMS follow-ups)
+        <label>WhatsApp number
           <input name="homeowner_phone" placeholder="+15551234567" />
         </label>
         <label>Email
@@ -47,7 +53,7 @@
       <label>Notes
         <textarea name="notes" placeholder="Insurance claim, prefers weekend start, comparing 2 other bids…"></textarea>
       </label>
-      <button class="btn btn-primary" type="submit">Save & schedule follow-ups</button>
+      <button class="btn btn-primary" type="submit">Save client & start auto follow-ups</button>
     </form>
   </div>
 </section>

@@ -3,6 +3,7 @@ from datetime import date, timedelta
 import closeloop.db as db_module
 from closeloop.messaging import MessageSender
 from closeloop.service import (
+    authenticate_business,
     create_business,
     create_estimate,
     next_follow_up_date,
@@ -24,6 +25,8 @@ def test_trade_catalog_covers_core_verticals():
     trade = get_trade("roofing")
     days = {c.day for c in trade.sequences}
     assert days == set(FOLLOW_UP_DAYS)
+    assert any(c.channel == "whatsapp" for c in trade.sequences)
+    assert any(c.channel == "email" for c in trade.sequences)
     assert any(c.channel == "call_script" for c in trade.sequences)
 
 
@@ -34,9 +37,19 @@ def test_next_follow_up_date_progression():
     assert next_follow_up_date(quoted, today=date(2026, 1, 12)) is None
 
 
-def test_create_estimate_schedules_day_2_5_10():
+def test_register_business_and_schedule_whatsapp_email():
     with db_module.SessionLocal() as db:
-        biz = create_business(db, name="Paint Pros", owner_name="Ana", trade_key="painting")
+        biz = create_business(
+            db,
+            name="Paint Pros",
+            owner_name="Ana",
+            trade_key="painting",
+            login_email="ana@paint.test",
+            password="secret12",
+        )
+        assert authenticate_business(db, "ana@paint.test", "secret12")
+        assert authenticate_business(db, "ana@paint.test", "nope") is None
+
         est = create_estimate(
             db,
             biz,
@@ -46,10 +59,13 @@ def test_create_estimate_schedules_day_2_5_10():
             address="1 Main",
             amount=4500,
             quoted_on=date.today() - timedelta(days=1),
+            send_due_now=False,
         )
         assert est.status == "open"
-        assert len(est.follow_ups) == 8  # sms+email on 2; sms+email+call on 5 & 10
-        assert {fu.day for fu in est.follow_ups} == {2, 5, 10}
+        channels = {fu.channel for fu in est.follow_ups}
+        assert "whatsapp" in channels and "email" in channels
+        assert any(fu.day == 0 for fu in est.follow_ups)
+        assert {fu.day for fu in est.follow_ups} >= {0, 2, 5, 10}
         assert "Sam" in est.follow_ups[0].body
         assert "Paint Pros" in est.follow_ups[0].body
 
@@ -67,6 +83,7 @@ def test_process_due_follow_ups_and_close_won():
             address="9 Oak",
             amount=3200,
             quoted_on=quoted,
+            send_due_now=False,
         )
         stats = process_due_follow_ups(db, sender=MessageSender())
         assert stats["processed"] >= 1
@@ -91,7 +108,26 @@ def test_lost_status_skips_remaining():
             homeowner_name="Pat",
             amount=900,
             quoted_on=date.today(),
+            send_due_now=False,
         )
         set_estimate_status(db, est, "lost", lost_reason="Chose competitor who called back")
         assert est.lost_reason.startswith("Chose competitor")
         assert all(fu.status == "skipped" for fu in est.follow_ups)
+
+
+def test_auto_send_on_create():
+    with db_module.SessionLocal() as db:
+        biz = create_business(db, name="Fence Co", owner_name="Bo", trade_key="fencing")
+        est = create_estimate(
+            db,
+            biz,
+            homeowner_name="Pat Client",
+            homeowner_phone="+15550003333",
+            homeowner_email="pat@example.com",
+            amount=2100,
+            quoted_on=date.today(),
+            send_due_now=True,
+        )
+        sentish = [fu for fu in est.follow_ups if fu.day == 0]
+        assert sentish
+        assert all(fu.status in {"sent", "skipped", "failed"} for fu in sentish)

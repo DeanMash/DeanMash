@@ -1,65 +1,95 @@
 {% extends "base.html" %}
-{% block title %}{{ app_name }} — Never lose a quoted job to silence{% endblock %}
+{% block title %}{{ app_name }} — Register, add clients, auto WhatsApp + email{% endblock %}
 {% block content %}
 <section class="hero">
   <div>
     <div class="pill-row">
-      <span class="pill">Built for roofers · painters · landscapers · construction</span>
-      <span class="pill">Day 2 / 5 / 10 chase</span>
+      <span class="pill">Click link → register company → add clients</span>
+      <span class="pill">WhatsApp + email · Day 2 / 5 / 10</span>
     </div>
-    <h1>You already spent 45 minutes quoting. Don’t let silence lose the job.</h1>
+    <h1>Potential clients click one link. Your company starts closing quoted jobs.</h1>
     <p class="lead">
-      Contractors drive out, write the estimate, hit send… then never follow up.
-      Homeowners go with whoever calls back. {{ app_name }} runs the chase for you —
-      SMS, email, and call scripts at Day 2, Day 5, and Day 10 — until the job is won or closed.
+      Share your CloseLoop registration link in ads, catalogues, and social posts.
+      Contractors register their company, enter client/estimate details after each site visit,
+      and automatic WhatsApp + email follow-ups start immediately — then again on Day 2, 5, and 10.
     </p>
     <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-      {% if has_business %}
+      {% if business %}
         <a class="btn btn-primary" href="/dashboard">Open dashboard</a>
+        <a class="btn btn-secondary" href="/estimates/new">Add a client</a>
       {% else %}
-        <a class="btn btn-primary" href="/onboard">Start closing more jobs</a>
+        <a class="btn btn-primary" href="/register">Register your company</a>
+        <a class="btn btn-secondary" href="/guide">Step-by-step guide</a>
       {% endif %}
-      <a class="btn btn-secondary" href="#pricing">See $500–$1,500 plans</a>
     </div>
+    <p class="muted tiny" style="margin-top:1rem;">
+      Public signup link to share:
+      <code style="color:#9fd9ff;">{{ register_url }}</code>
+    </p>
   </div>
   <div class="card hero-card">
-    <h3>The CloseLoop cadence</h3>
+    <h3>Automatic chase cadence</h3>
     <ul class="timeline">
       <li>
         <div class="day-badge">Day 0</div>
         <div>
-          <strong>Estimate sent</strong>
-          <div class="muted tiny">After the site visit — log it in 30 seconds.</div>
+          <strong>Client saved</strong>
+          <div class="muted tiny">Welcome WhatsApp + email fire right away.</div>
         </div>
       </li>
       <li>
         <div class="day-badge">Day 2</div>
         <div>
           <strong>Soft check-in</strong>
-          <div class="muted tiny">“Did you get the quote?” SMS + email. No pressure.</div>
+          <div class="muted tiny">“Did you get the quote?” on WhatsApp + email.</div>
         </div>
       </li>
       <li>
         <div class="day-badge">Day 5</div>
         <div>
           <strong>Value + urgency</strong>
-          <div class="muted tiny">Crew windows, materials, call script to handle objections.</div>
+          <div class="muted tiny">Crew windows + call script on your dashboard.</div>
         </div>
       </li>
       <li>
         <div class="day-badge">Day 10</div>
         <div>
           <strong>Decision close</strong>
-          <div class="muted tiny">YES / HOLD / NO — book it or free your pipeline.</div>
+          <div class="muted tiny">YES / HOLD / NO — book it or free the pipeline.</div>
         </div>
       </li>
     </ul>
   </div>
 </section>
 
+<section class="section" id="steps">
+  <h2>How contractors register (share this)</h2>
+  <p class="sub">Six steps from ad click to automatic follow-ups.</p>
+  <div class="grid-3">
+    {% for s in steps %}
+    <div class="card card-pad">
+      <div class="muted tiny">Step {{ s.step }}</div>
+      <h3 style="margin:0.2rem 0;">{{ s.title }}</h3>
+      <p class="muted tiny" style="margin:0;">{{ s.detail }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section" id="advantages">
+  <h2>Advantages you can put on posters</h2>
+  <div class="grid-3">
+    {% for a in advantages %}
+    <div class="trade-card">
+      <h3>{{ a.title }}</h3>
+      <p class="tiny muted" style="margin:0;">{{ a.detail }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
 <section class="section" id="trades">
-  <h2>Playbooks for the trades that live on estimates</h2>
-  <p class="sub">Each vertical ships with proven SMS, email, and phone scripts — not generic CRM spam.</p>
+  <h2>Playbooks for estimate-heavy trades</h2>
   <div class="grid-4">
     {% for t in trades %}
     <div class="trade-card">
@@ -72,28 +102,9 @@
   </div>
 </section>
 
-<section class="section" id="how">
-  <h2>How crews use it on Monday morning</h2>
-  <p class="sub">No new CRM religion. Log the quote you already sent — we handle the awkward follow-ups.</p>
-  <div class="grid-3">
-    <div class="card card-pad">
-      <h3>1. Capture the quote</h3>
-      <p class="muted">Homeowner, address, amount, trade. Quoted date starts the Day 2/5/10 clock.</p>
-    </div>
-    <div class="card card-pad">
-      <h3>2. Auto-chase</h3>
-      <p class="muted">SMS + email go out on schedule. Day 5 & 10 call scripts appear on your dashboard.</p>
-    </div>
-    <div class="card card-pad">
-      <h3>3. Mark won / lost</h3>
-      <p class="muted">When they book — or ghost — close the file. Pending follow-ups stop automatically.</p>
-    </div>
-  </div>
-</section>
-
 <section class="section" id="pricing">
-  <h2>Pricing that pays for itself on one saved roof</h2>
-  <p class="sub">Flat monthly. Built for owner-operators through multi-crew shops. $500 → $1,500.</p>
+  <h2>Plans from $500 to $1,500 / month</h2>
+  <p class="sub">Share pricing on catalogues and ads — one saved job often covers the plan.</p>
   <div class="grid-3">
     {% for tier in tiers %}
     <div class="price-card {% if tier.highlighted %}highlight{% endif %}">
@@ -101,15 +112,16 @@
       <div class="price">{{ tier.price_label }}</div>
       <p class="tiny muted">{{ tier.blurb }}</p>
       <ul>
-        {% for f in tier.features %}
-        <li>{{ f }}</li>
-        {% endfor %}
+        {% for f in tier.features %}<li>{{ f }}</li>{% endfor %}
       </ul>
-      <a class="btn {% if tier.highlighted %}btn-primary{% else %}btn-secondary{% endif %}" href="/onboard?plan={{ tier.key }}">
-        Choose {{ tier.name }}
+      <a class="btn {% if tier.highlighted %}btn-primary{% else %}btn-secondary{% endif %}" href="/register?plan={{ tier.key }}">
+        Register — {{ tier.name }}
       </a>
     </div>
     {% endfor %}
   </div>
+  <p style="margin-top:1.2rem;">
+    <a class="btn btn-ghost" href="/advertise">Open social + catalogue advert pack →</a>
+  </p>
 </section>
 {% endblock %}

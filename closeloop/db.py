@@ -35,9 +35,9 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 def init_db(url: str | None = None) -> None:
     global engine, SessionLocal
-    if url is not None:
-        engine = build_engine(url)
-        SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    db_url = url or _engine_url()
+    engine = build_engine(db_url)
+    SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     from closeloop import models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)

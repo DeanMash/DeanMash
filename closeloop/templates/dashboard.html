@@ -4,13 +4,16 @@
 {% if request.query_params.get('ran') %}
 <div class="flash">Ran follow-ups — {{ request.query_params.get('ran') }} message(s) sent/logged.</div>
 {% endif %}
+{% if request.query_params.get('added') %}
+<div class="flash">Client saved. Welcome WhatsApp + email queued/sent — Day 2 / 5 / 10 are scheduled.</div>
+{% endif %}
 
 <section style="padding: 0.5rem 0 1rem;">
   <div style="display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; align-items:end;">
     <div>
       <div class="muted tiny">{{ trade.emoji }} {{ trade.label }} · {{ business.plan_key|capitalize }} plan</div>
       <h1 style="margin:0.2rem 0; letter-spacing:-0.02em;">{{ business.name }}</h1>
-      <p class="muted" style="margin:0;">Owner {{ business.owner_name }} · automating Day 2 / 5 / 10 chases</p>
+      <p class="muted" style="margin:0;">Owner {{ business.owner_name }} · WhatsApp + email Day 2 / 5 / 10</p>
     </div>
     <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
       <form method="post" action="/run-followups">
@@ -117,7 +120,7 @@
           <div class="tiny">{{ m.body[:140] }}{% if m.body|length > 140 %}…{% endif %}</div>
         </div>
       {% else %}
-        <p class="muted">No messages yet. Click <em>Run due follow-ups now</em> to process Day 2/5/10 SMS & email.</p>
+        <p class="muted">No messages yet. Click <em>Run due follow-ups now</em> to process due WhatsApp & email.</p>
       {% endfor %}
     </div>
   </div>
