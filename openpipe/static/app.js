@@ -65,6 +65,11 @@
           <strong>${d.subject}</strong>
         </header>
         <p>${excerpt(d.body)}</p>
+        ${
+          d.whatsapp
+            ? `<p class="mail-meta">WhatsApp: ${excerpt(d.whatsapp)}</p>`
+            : ""
+        }
         <p class="mail-meta">${sample.prospect} · ${sample.company}</p>
       </article>`
       )
