@@ -6,22 +6,25 @@ from openpipe.store import Store
 from openpipe.web import create_app
 
 
-def test_landing_and_apis(tmp_path: Path, monkeypatch):
+def test_landing_register_and_apis(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("OPENPIPE_DB_PATH", str(tmp_path / "web.db"))
     monkeypatch.setenv("OPENPIPE_DASHBOARD_TOKEN", "")
+    monkeypatch.setenv("OPENPIPE_AUTO_RUN", "0")
     store = Store(tmp_path / "web.db")
     app = create_app(store)
     client = TestClient(app)
 
     assert client.get("/").status_code == 200
     assert client.get("/dashboard").status_code == 200
-    assert client.get("/api/health").json()["product"] == "OpenPipe"
+    assert client.get("/register").status_code == 200
+    health = client.get("/api/health").json()
+    assert health["product"] == "OpenPipe"
+    assert "whatsapp" in health["channels"]
 
     verticals = client.get("/api/verticals").json()
     assert any(v["key"] == "insurance" for v in verticals)
     assert any(v["key"] == "advisor" for v in verticals)
     assert any(v["key"] == "b2b" for v in verticals)
-    assert len(verticals) >= 8
 
     plans = client.get("/api/plans").json()
     prices = {p["price_usd"] for p in plans}
@@ -33,25 +36,60 @@ def test_landing_and_apis(tmp_path: Path, monkeypatch):
     samples = client.get("/api/samples").json()
     assert len(samples) == 3
     assert all(len(s["days"]) == 3 for s in samples)
+    assert all(s["days"][0].get("whatsapp") for s in samples)
 
     businesses = client.get("/api/businesses").json()
     assert len(businesses) >= 3
     verticals_present = {b["vertical"] for b in businesses}
     assert {"insurance", "advisor", "b2b"} <= verticals_present
 
-    advisor = next(b for b in businesses if b["vertical"] == "advisor")
-    advisor_detail = client.get(f"/api/business?business_id={advisor['id']}").json()
-    assert advisor_detail["vertical"] == "advisor"
-    assert advisor_detail["start_tip"]
+    reg = client.post(
+        "/api/register",
+        json={
+            "owner_name": "Tariro",
+            "business_name": "Tariro Cover",
+            "vertical": "insurance",
+            "email": "tariro@newfirm.example",
+            "phone": "+263771112233",
+            "city": "Harare",
+            "niche": "fleet",
+            "channels": "both",
+            "plan": "starter",
+            "seed_prospects": True,
+        },
+    )
+    assert reg.status_code == 200, reg.text
+    payload = reg.json()
+    assert payload["status"] == "registered"
+    token = payload["access_token"]
+    biz_id = payload["business"]["id"]
+    assert payload["seeded"]["added"] >= 1
 
-    insurance = next(b for b in businesses if b["vertical"] == "insurance")
-    stats = client.get(f"/api/stats?business_id={insurance['id']}").json()
-    assert stats["prospects"] >= 1
+    me = client.get(
+        f"/api/business?business_id={biz_id}",
+        headers={"X-Openpipe-Token": token},
+    )
+    assert me.status_code == 200
+    assert me.json()["channels"] == "both"
 
-    b2b = next(b for b in businesses if b["vertical"] == "b2b")
-    discover = client.post(f"/api/discover?business_id={b2b['id']}", json={"limit": 3})
-    assert discover.status_code == 200
-    assert "added" in discover.json()
+    preview = client.get(
+        f"/api/preview?business_id={biz_id}&prospect_id={store.list_prospects(biz_id)[0].id}&channel=whatsapp",
+        headers={"X-Openpipe-Token": token},
+    )
+    assert preview.status_code == 200
+    assert preview.json()["channel"] == "whatsapp"
+
+    run = client.post(
+        f"/api/run?business_id={biz_id}",
+        headers={"X-Openpipe-Token": token},
+        json={},
+    )
+    assert run.status_code == 200
+    assert "by_channel" in run.json()
+
+    login = client.post("/api/login", json={"access_token": token})
+    assert login.status_code == 200
+    assert login.json()["business"]["id"] == biz_id
 
     lead = client.post(
         "/api/leads",

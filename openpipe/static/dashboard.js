@@ -11,15 +11,25 @@
   const addForm = document.getElementById("add-prospect");
   const startTip = document.getElementById("start-tip");
   const startSteps = document.querySelectorAll(".start-steps li");
+  const channelSelect = document.getElementById("channel-select");
+  const autoRunSelect = document.getElementById("auto-run-select");
 
+  const params = new URLSearchParams(window.location.search);
   const state = {
-    businessId: localStorage.getItem("openpipe_biz") || "",
+    businessId: params.get("business_id") || localStorage.getItem("openpipe_biz") || "",
     done: {
       1: localStorage.getItem("openpipe_step1") === "1",
       2: localStorage.getItem("openpipe_step2") === "1",
       3: localStorage.getItem("openpipe_step3") === "1",
     },
   };
+
+  const savedToken = localStorage.getItem("openpipe_token");
+  if (savedToken) tokenInput.value = savedToken;
+
+  tokenInput.addEventListener("change", () => {
+    localStorage.setItem("openpipe_token", tokenInput.value.trim());
+  });
 
   function headers() {
     const h = { "Content-Type": "application/json" };
@@ -63,22 +73,27 @@
     return `<div class="stat"><div class="label">${label}</div><div class="value">${value}</div></div>`;
   }
 
-  async function preview(prospectId, day = 0) {
+  async function preview(prospectId, day = 0, channel = "email") {
     const data = await api(
-      `/api/preview?prospect_id=${encodeURIComponent(prospectId)}&day=${day}`
+      `/api/preview?prospect_id=${encodeURIComponent(prospectId)}&day=${day}&channel=${encodeURIComponent(channel)}`
     );
     previewEl.innerHTML = `
-      <h3>Email preview · Day ${data.day}</h3>
+      <h3>${data.channel === "whatsapp" ? "WhatsApp" : "Email"} preview · Day ${data.day}</h3>
       <p class="msg-meta">To ${data.to}</p>
       <p><strong>${data.subject}</strong></p>
       <pre>${data.body}</pre>
       <div class="actions" style="margin-top:0.5rem">
-        <button type="button" data-day="0">Day 0</button>
-        <button type="button" data-day="3">Day 3</button>
-        <button type="button" data-day="7">Day 7</button>
+        <button type="button" data-day="0" data-ch="email">Email D0</button>
+        <button type="button" data-day="3" data-ch="email">Email D3</button>
+        <button type="button" data-day="7" data-ch="email">Email D7</button>
+        <button type="button" data-day="0" data-ch="whatsapp">WA D0</button>
+        <button type="button" data-day="3" data-ch="whatsapp">WA D3</button>
+        <button type="button" data-day="7" data-ch="whatsapp">WA D7</button>
       </div>`;
     previewEl.querySelectorAll("button[data-day]").forEach((btn) => {
-      btn.addEventListener("click", () => preview(prospectId, Number(btn.dataset.day)));
+      btn.addEventListener("click", () =>
+        preview(prospectId, Number(btn.dataset.day), btn.dataset.ch)
+      );
     });
     markStep(2);
   }
@@ -109,8 +124,13 @@
     ]);
 
     bizName.textContent = biz.name;
-    bizMeta.textContent = `${biz.vertical} · ${biz.city} · ${biz.sender_name} · ${biz.plan} plan · niche: ${biz.niche || "—"}`;
-    startTip.textContent = biz.start_tip || biz.blurb || "Find prospects, preview the sequence, then send.";
+    bizMeta.textContent = `${biz.vertical} · ${biz.city} · ${biz.sender_name} · ${biz.plan} · channels: ${biz.channels} · niche: ${biz.niche || "—"}`;
+    startTip.textContent =
+      biz.start_tip ||
+      biz.blurb ||
+      "Find prospects, preview email/WhatsApp, then send.";
+    channelSelect.value = biz.channels || "both";
+    autoRunSelect.value = String(biz.auto_run ?? 1);
 
     statsEl.innerHTML = [
       statCard("Prospects", stats.prospects),
@@ -118,6 +138,8 @@
       statCard("Replied", stats.replied),
       statCard("Meetings", stats.meetings),
       statCard("Sent", stats.messages_sent),
+      statCard("Email", stats.email_sent ?? 0),
+      statCard("WhatsApp", stats.whatsapp_sent ?? 0),
       statCard("Queued", stats.messages_queued),
       statCard("Reply %", stats.reply_rate),
     ].join("");
@@ -128,7 +150,7 @@
       <tr>
         <td>
           <strong>${p.full_name}</strong><br />
-          <span class="msg-meta">${p.title || "—"} · ${p.email}</span>
+          <span class="msg-meta">${p.title || "—"} · ${p.email || "no email"}${p.phone ? " · " + p.phone : ""}</span>
         </td>
         <td>${p.company}<br /><span class="msg-meta">${p.trigger || ""}</span></td>
         <td><span class="status ${p.status}">${p.status}</span></td>
@@ -145,10 +167,8 @@
 
     prospectsBody.querySelectorAll("[data-preview]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        preview(btn.dataset.preview, 0)
-          .then(() => {
-            previewEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          })
+        preview(btn.dataset.preview, 0, "email")
+          .then(() => previewEl.scrollIntoView({ behavior: "smooth", block: "nearest" }))
           .catch((err) => alert(String(err.message || err)));
       });
     });
@@ -173,11 +193,11 @@
 
     messagesEl.innerHTML = messages.length
       ? messages
-          .slice(0, 40)
+          .slice(0, 50)
           .map(
             (m) => `
         <div class="msg-item">
-          <strong>Day ${m.day} · ${m.status}</strong>
+          <strong><span class="channel-pill ${m.channel}">${m.channel}</span> Day ${m.day} · ${m.status}</strong>
           <div>${m.subject}</div>
           <div class="msg-meta">${m.scheduled_for}${m.sent_at ? " · sent " + m.sent_at : ""}</div>
         </div>`
@@ -210,8 +230,24 @@
     localStorage.removeItem("openpipe_step2");
     localStorage.removeItem("openpipe_step3");
     previewEl.innerHTML =
-      "<h3>Email preview</h3><p>Select Preview on a prospect to see Day 0 / 3 / 7 copy.</p>";
+      "<h3>Message preview</h3><p>Select Preview on a prospect to see Day 0 / 3 / 7 email or WhatsApp copy.</p>";
     await refresh();
+  });
+
+  document.getElementById("btn-save-settings").addEventListener("click", async () => {
+    try {
+      await api("/api/business", {
+        method: "PATCH",
+        body: JSON.stringify({
+          channels: channelSelect.value,
+          auto_run: Number(autoRunSelect.value),
+        }),
+      });
+      await refresh();
+      alert("Settings saved — plan rebuilt for channel mix.");
+    } catch (err) {
+      alert(String(err.message || err));
+    }
   });
 
   document.getElementById("btn-refresh").addEventListener("click", () => refresh().catch(alert));
@@ -222,7 +258,10 @@
   document.getElementById("btn-run").addEventListener("click", async () => {
     const result = await api("/api/run", { method: "POST", body: "{}" });
     markStep(3);
-    alert(`Sent ${result.sent} · failed ${result.failed} · checked ${result.checked}`);
+    const ch = result.by_channel || {};
+    alert(
+      `Sent ${result.sent} (email ${ch.email || 0} · WhatsApp ${ch.whatsapp || 0}) · failed ${result.failed}`
+    );
     await refresh();
   });
   document.getElementById("btn-discover").addEventListener("click", async () => {
@@ -231,7 +270,7 @@
       body: JSON.stringify({ limit: 6 }),
     });
     markStep(1);
-    alert(`Added ${result.added} prospects · planned ${result.messages_planned} emails`);
+    alert(`Added ${result.added} prospects · planned ${result.messages_planned} messages`);
     await refresh();
   });
 

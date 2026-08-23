@@ -1,4 +1,4 @@
-"""Prospect → personalise → send engine (Day 0 / 3 / 7)."""
+"""Prospect → personalise → send engine (email + WhatsApp, Day 0 / 3 / 7)."""
 
 from __future__ import annotations
 
@@ -6,9 +6,10 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from . import config
+from .channels import channels_for_day
 from .messaging import MessageSender
 from .store import OutboundMessage, Prospect, Store
-from .templates_msg import DEFAULT_OFFERS, all_days, render_sequence
+from .templates_msg import DEFAULT_OFFERS, all_days, render_sequence, render_whatsapp
 
 
 def _utc(dt: datetime | None = None) -> datetime:
@@ -29,47 +30,68 @@ class OutreachEngine:
         if not biz:
             return []
 
-        # Anchor Day 0 slightly in the past so demo "Send due" works immediately.
         now = _utc()
         planned: list[OutboundMessage] = []
+        has_phone = bool((prospect.phone or "").strip())
 
         for day in all_days():
-            copy = render_sequence(
-                biz.vertical,
-                day,
-                prospect_name=prospect.full_name,
-                company=prospect.company,
-                title=prospect.title,
-                trigger=prospect.trigger,
-                sender_name=biz.sender_name,
-                business_name=biz.name,
-                offer=biz.offer or DEFAULT_OFFERS.get(biz.vertical),
-                booking_link=biz.booking_link,
-            )
-            scheduled = now - timedelta(minutes=5) + timedelta(days=day)
+            for channel in channels_for_day(biz.channels, day, has_phone=has_phone):
+                if channel == "whatsapp":
+                    wa = render_whatsapp(
+                        biz.vertical,
+                        day,
+                        prospect_name=prospect.full_name,
+                        company=prospect.company,
+                        title=prospect.title,
+                        trigger=prospect.trigger,
+                        sender_name=biz.sender_name,
+                        business_name=biz.name,
+                        offer=biz.offer or DEFAULT_OFFERS.get(biz.vertical),
+                        booking_link=biz.booking_link,
+                    )
+                    subject = f"WhatsApp · Day {day}"
+                    body = wa.body
+                else:
+                    copy = render_sequence(
+                        biz.vertical,
+                        day,
+                        prospect_name=prospect.full_name,
+                        company=prospect.company,
+                        title=prospect.title,
+                        trigger=prospect.trigger,
+                        sender_name=biz.sender_name,
+                        business_name=biz.name,
+                        offer=biz.offer or DEFAULT_OFFERS.get(biz.vertical),
+                        booking_link=biz.booking_link,
+                    )
+                    subject = copy.subject
+                    body = copy.body
 
-            if prospect.status in {"replied", "meeting", "paused"}:
-                status = "skipped"
-            elif prospect.status == "exhausted":
-                status = "skipped"
-            else:
-                status = "queued"
+                scheduled = now - timedelta(minutes=5) + timedelta(days=day)
+                if channel == "whatsapp" and day == 3:
+                    # Slight offset so WhatsApp follows email waves cleanly in demos.
+                    scheduled = now - timedelta(minutes=2) + timedelta(days=day)
 
-            msg = OutboundMessage(
-                id=str(uuid4()),
-                business_id=business_id,
-                prospect_id=prospect.id,
-                day=day,
-                channel="email",
-                subject=copy.subject,
-                body=copy.body,
-                status=status,
-                scheduled_for=scheduled.isoformat(),
-                sent_at=None,
-                error=None,
-            )
-            self.store.upsert_message(msg)
-            planned.append(msg)
+                if prospect.status in {"replied", "meeting", "paused", "exhausted"}:
+                    status = "skipped"
+                else:
+                    status = "queued"
+
+                msg = OutboundMessage(
+                    id=str(uuid4()),
+                    business_id=business_id,
+                    prospect_id=prospect.id,
+                    day=day,
+                    channel=channel,
+                    subject=subject,
+                    body=body,
+                    status=status,
+                    scheduled_for=scheduled.isoformat(),
+                    sent_at=None,
+                    error=None,
+                )
+                self.store.upsert_message(msg)
+                planned.append(msg)
 
         if prospect.status == "new":
             self.store.update_prospect(prospect.id, status="sequenced")
@@ -116,6 +138,7 @@ class OutreachEngine:
         sent = 0
         failed = 0
         skipped_cap = 0
+        by_channel = {"email": 0, "whatsapp": 0}
 
         for msg in due:
             if sent >= cap:
@@ -132,11 +155,14 @@ class OutreachEngine:
                 self.store.mark_message(msg.id, "skipped", "prospect not eligible")
                 continue
 
-            result = self.sender.send_email(
-                to=prospect.email,
+            to = prospect.phone if msg.channel == "whatsapp" else prospect.email
+            result = self.sender.send(
+                channel=msg.channel,
+                to=to,
                 subject=msg.subject,
                 body=msg.body,
                 from_email=biz.sender_email,
+                from_whatsapp=biz.whatsapp_from or biz.owner_phone,
             )
 
             if result.ok:
@@ -144,7 +170,15 @@ class OutreachEngine:
                 if prospect.status == "new":
                     self.store.update_prospect(prospect.id, status="sequenced")
                 if msg.day >= 7:
-                    self.store.update_prospect(prospect.id, status="exhausted")
+                    remaining = [
+                        m
+                        for m in self.store.list_messages(msg.business_id, limit=500)
+                        if m.prospect_id == prospect.id
+                        and m.status == "queued"
+                        and m.id != msg.id
+                    ]
+                    if not remaining:
+                        self.store.update_prospect(prospect.id, status="exhausted")
                 self.store.add_event(
                     msg.business_id,
                     "message_sent",
@@ -155,9 +189,11 @@ class OutreachEngine:
                         "day": msg.day,
                         "channel": result.channel,
                         "subject": msg.subject,
+                        "to": to,
                     },
                 )
                 sent += 1
+                by_channel[result.channel] = by_channel.get(result.channel, 0) + 1
             else:
                 self.store.mark_message(msg.id, "failed", result.error)
                 failed += 1
@@ -170,6 +206,7 @@ class OutreachEngine:
                     "sent": sent,
                     "failed": failed,
                     "skipped_cap": skipped_cap,
+                    "by_channel": by_channel,
                     "as_of": now.isoformat(),
                 },
             )
@@ -178,7 +215,20 @@ class OutreachEngine:
             "failed": failed,
             "checked": len(due),
             "skipped_cap": skipped_cap,
+            "by_channel": by_channel,
         }
+
+    def run_auto(self) -> dict:
+        """Send due messages for every org with auto_run enabled."""
+        totals = {"sent": 0, "failed": 0, "businesses": 0}
+        for biz in self.store.list_businesses():
+            if not biz.auto_run:
+                continue
+            result = self.run_due(biz.id)
+            totals["sent"] += result["sent"]
+            totals["failed"] += result["failed"]
+            totals["businesses"] += 1
+        return totals
 
     def mark_replied(self, prospect_id: str) -> Prospect | None:
         prospect = self.store.update_prospect(
@@ -222,11 +272,37 @@ class OutreachEngine:
             )
         return prospect
 
-    def preview(self, business_id: str, prospect_id: str, day: int = 0) -> dict:
+    def preview(
+        self,
+        business_id: str,
+        prospect_id: str,
+        day: int = 0,
+        channel: str = "email",
+    ) -> dict:
         biz = self.store.get_business(business_id)
         prospect = self.store.get_prospect(prospect_id)
         if not biz or not prospect:
             return {"error": "not found"}
+        if channel == "whatsapp":
+            wa = render_whatsapp(
+                biz.vertical,
+                day,
+                prospect_name=prospect.full_name,
+                company=prospect.company,
+                title=prospect.title,
+                trigger=prospect.trigger,
+                sender_name=biz.sender_name,
+                business_name=biz.name,
+                offer=biz.offer or DEFAULT_OFFERS.get(biz.vertical),
+                booking_link=biz.booking_link,
+            )
+            return {
+                "day": wa.day,
+                "subject": f"WhatsApp · Day {wa.day}",
+                "body": wa.body,
+                "channel": "whatsapp",
+                "to": prospect.phone or "(no phone on file)",
+            }
         copy = render_sequence(
             biz.vertical,
             day,

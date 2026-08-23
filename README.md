@@ -1,8 +1,8 @@
 # DeanMash products
 
-## OpenPipe (prospecting + email outbound)
+## OpenPipe (prospecting + email / WhatsApp outbound)
 
-Find prospects, write personalised emails, and send at scale — for insurance brokers, financial advisors, and B2B services. See [OPENPIPE.md](OPENPIPE.md).
+Find prospects, write personalised emails **and WhatsApp**, and send at scale — for small organisations (insurance brokers, financial advisors, B2B). See [OPENPIPE.md](OPENPIPE.md).
 
 ```bash
 pip install -r requirements.txt
@@ -10,6 +10,7 @@ python -m openpipe
 ```
 
 - Site: `http://127.0.0.1:8090/`
+- **Register:** `http://127.0.0.1:8090/register`
 - Dashboard: `http://127.0.0.1:8090/dashboard`
 
 ---

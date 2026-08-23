@@ -686,3 +686,33 @@ a {
     padding-top: 4.5rem;
   }
 }
+
+.register-wrap {
+  max-width: 640px;
+}
+
+.token-box,
+.login-box {
+  margin-top: 2rem;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.token-box h3,
+.login-box h3 {
+  margin: 0 0 0.5rem;
+  font-family: var(--display);
+}
+
+.token-box code {
+  display: block;
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: var(--ink);
+  color: #f8fafc;
+  border-radius: 0.45rem;
+  word-break: break-all;
+  font-size: 0.95rem;
+}

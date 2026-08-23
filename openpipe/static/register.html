@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Register — OpenPipe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <nav class="site-nav" id="nav">
+      <a class="brand" href="/">Open<span>Pipe</span></a>
+      <div class="nav-links">
+        <a class="btn btn-ghost" href="/dashboard">Live demo</a>
+        <a class="btn btn-primary" href="/register">Register</a>
+      </div>
+    </nav>
+
+    <main class="section register-wrap">
+      <div class="section-head reveal is-visible">
+        <h2>Register your organisation</h2>
+        <p>
+          Small firms start here. We'll create your book, find starter prospects,
+          and queue personalised email + WhatsApp sequences — Day 0 / 3 / 7.
+        </p>
+      </div>
+
+      <form id="register-form" class="lead reveal is-visible">
+        <label>
+          Your name
+          <input name="owner_name" required placeholder="Tariro Moyo" />
+        </label>
+        <label>
+          Organisation name
+          <input name="business_name" required placeholder="Horizon Cover Brokers" />
+        </label>
+        <label>
+          Business type
+          <select name="vertical" id="reg-vertical"></select>
+        </label>
+        <label>
+          Work email
+          <input name="email" type="email" required placeholder="you@firm.com" />
+        </label>
+        <label>
+          WhatsApp number
+          <input name="phone" placeholder="+263 77…" />
+        </label>
+        <label>
+          City
+          <input name="city" value="Harare" />
+        </label>
+        <label>
+          Niche keywords
+          <input name="niche" placeholder="fleet logistics sme" />
+        </label>
+        <label>
+          Channels
+          <select name="channels">
+            <option value="both" selected>Email + WhatsApp</option>
+            <option value="email">Email only</option>
+            <option value="whatsapp">WhatsApp only</option>
+          </select>
+        </label>
+        <label>
+          Plan
+          <select name="plan">
+            <option value="starter" selected>Starter — $900/mo</option>
+            <option value="pipeline">Pipeline — $1,500/mo</option>
+            <option value="scale">Scale — $2,500/mo</option>
+          </select>
+        </label>
+        <label>
+          Your offer (optional)
+          <input name="offer" placeholder="a 20-minute cover gap review" />
+        </label>
+        <button class="btn btn-primary" type="submit">Create account &amp; seed pipeline</button>
+        <div class="form-note" id="reg-note" aria-live="polite"></div>
+      </form>
+
+      <div class="token-box" id="token-box" hidden>
+        <h3>You're in. Save this access token.</h3>
+        <p>Paste it on the dashboard to manage your prospects and send waves.</p>
+        <code id="access-token"></code>
+        <div class="hero-cta" style="margin-top: 1rem">
+          <a class="btn btn-signal" id="open-dash" href="/dashboard">Open my dashboard</a>
+          <button class="btn btn-ghost" type="button" id="copy-token">Copy token</button>
+        </div>
+      </div>
+
+      <section class="login-box">
+        <h3>Already registered?</h3>
+        <form id="login-form" class="lead">
+          <label>
+            Access token
+            <input name="access_token" required placeholder="Paste your token" />
+          </label>
+          <button class="btn btn-primary" type="submit">Open dashboard</button>
+          <div class="form-note" id="login-note" aria-live="polite"></div>
+        </form>
+      </section>
+    </main>
+
+    <script src="/static/register.js"></script>
+  </body>
+</html>

@@ -20,3 +20,5 @@ BUSINESS_NAME = os.getenv("OPENPIPE_BUSINESS_NAME", "Horizon Cover Brokers")
 BUSINESS_VERTICAL = os.getenv("OPENPIPE_BUSINESS_VERTICAL", "insurance")
 TIMEZONE = os.getenv("OPENPIPE_TIMEZONE", "Africa/Harare")
 DAILY_SEND_CAP = int(os.getenv("OPENPIPE_DAILY_SEND_CAP", "80"))
+AUTO_RUN_ENABLED = os.getenv("OPENPIPE_AUTO_RUN", "1") not in {"0", "false", "False"}
+AUTO_RUN_INTERVAL_SEC = int(os.getenv("OPENPIPE_AUTO_RUN_INTERVAL", "60"))

@@ -27,6 +27,12 @@ class EmailCopy:
     body: str
 
 
+@dataclass(frozen=True)
+class WhatsAppCopy:
+    day: int
+    body: str
+
+
 def first_name(full_name: str) -> str:
     return (full_name or "there").strip().split()[0]
 
@@ -43,14 +49,18 @@ def sample_sequences(verticals: tuple[str, ...] | None = None) -> list[dict]:
     out: list[dict] = []
     for vertical in keys:
         ctx = SAMPLE_PROSPECTS.get(vertical, SAMPLE_PROSPECTS["insurance"])
-        days = [
-            {
-                "day": day,
-                "subject": render_sequence(vertical, day, **ctx).subject,
-                "body": render_sequence(vertical, day, **ctx).body,
-            }
-            for day in SEQUENCE_DAYS
-        ]
+        days = []
+        for day in SEQUENCE_DAYS:
+            email = render_sequence(vertical, day, **ctx)
+            wa = render_whatsapp(vertical, day, **ctx)
+            days.append(
+                {
+                    "day": day,
+                    "subject": email.subject,
+                    "body": email.body,
+                    "whatsapp": wa.body,
+                }
+            )
         out.append(
             {
                 "vertical": vertical,
@@ -68,6 +78,31 @@ def sample_sequences(verticals: tuple[str, ...] | None = None) -> list[dict]:
     return out
 
 
+def _ctx(
+    *,
+    prospect_name: str,
+    company: str,
+    title: str,
+    trigger: str,
+    sender_name: str,
+    business_name: str,
+    offer: str | None,
+    booking_link: str,
+    vertical: str,
+) -> dict[str, str]:
+    return {
+        "name": first_name(prospect_name),
+        "full_name": prospect_name,
+        "company": company,
+        "title": title,
+        "trigger": trigger,
+        "sender": sender_name,
+        "business": business_name,
+        "offer": offer or DEFAULT_OFFERS.get(vertical, DEFAULT_OFFERS["b2b"]),
+        "link": booking_link,
+    }
+
+
 def render_sequence(
     vertical: str,
     day: int,
@@ -81,27 +116,54 @@ def render_sequence(
     offer: str | None = None,
     booking_link: str = "https://openpipe.example/book",
 ) -> EmailCopy:
-    offer_text = offer or DEFAULT_OFFERS.get(vertical, DEFAULT_OFFERS["b2b"])
-    name = first_name(prospect_name)
+    ctx = _ctx(
+        prospect_name=prospect_name,
+        company=company,
+        title=title,
+        trigger=trigger,
+        sender_name=sender_name,
+        business_name=business_name,
+        offer=offer,
+        booking_link=booking_link,
+        vertical=vertical,
+    )
     templates = _TEMPLATES.get(vertical, _TEMPLATES["b2b"])
     day_key = day if day in templates else 0
     subject_tpl, body_tpl = templates[day_key]
-    ctx = {
-        "name": name,
-        "full_name": prospect_name,
-        "company": company,
-        "title": title,
-        "trigger": trigger,
-        "sender": sender_name,
-        "business": business_name,
-        "offer": offer_text,
-        "link": booking_link,
-    }
     return EmailCopy(
         day=day_key,
         subject=subject_tpl.format(**ctx),
         body=body_tpl.format(**ctx).strip(),
     )
+
+
+def render_whatsapp(
+    vertical: str,
+    day: int,
+    *,
+    prospect_name: str,
+    company: str,
+    title: str,
+    trigger: str,
+    sender_name: str,
+    business_name: str,
+    offer: str | None = None,
+    booking_link: str = "https://openpipe.example/book",
+) -> WhatsAppCopy:
+    ctx = _ctx(
+        prospect_name=prospect_name,
+        company=company,
+        title=title,
+        trigger=trigger,
+        sender_name=sender_name,
+        business_name=business_name,
+        offer=offer,
+        booking_link=booking_link,
+        vertical=vertical,
+    )
+    templates = _WA_TEMPLATES.get(vertical, _WA_TEMPLATES["b2b"])
+    day_key = day if day in templates else 0
+    return WhatsAppCopy(day=day_key, body=templates[day_key].format(**ctx).strip())
 
 
 # Subject + body templates per vertical and sequence day.
@@ -436,5 +498,60 @@ I'll stop here. If a sharper brand helps {company} sell: {link}
 {sender}
 {business}""",
         ),
+    },
+}
+
+
+# Short WhatsApp variants — same Day 0 / 3 / 7 cadence, fewer lines.
+_WA_TEMPLATES: dict[str, dict[int, str]] = {
+    "insurance": {
+        0: "Hi {name} — saw {trigger}. Congrats. Growth like that often creates cover gaps. {sender} at {business} here. Open to {offer}? {link}",
+        3: "Hi {name}, quick bump on cover for {company}. Happy to send a 1-page checklist or do {offer}. — {sender}",
+        7: "{name}, last note — if cover at {company} isn't sorted, {offer} is open: {link} — {sender}",
+    },
+    "advisor": {
+        0: "Hi {name} — {trigger} usually shifts cash-flow/tax/personal planning. {sender} ({business}). Open to {offer}? {link}",
+        3: "{name}, I can walk you through a short snapshot we use after moments like yours. {offer}? — {sender}",
+        7: "Closing the loop, {name}. If timing's right at {company}: {link} — {sender}",
+    },
+    "b2b": {
+        0: "Hi {name} — {trigger} stood out. We help B2B teams start buyer conversations with personalised outreach. {offer}? — {sender}, {business} {link}",
+        3: "{name}, pattern we see: good offers, weak first-touch. Happy to show a sample sequence — {offer}. — {sender}",
+        7: "Last note from me, {name}. If filling meetings for {company} is on your plate: {link} — {sender}",
+    },
+    "accounting": {
+        0: "Hi {name} — with {trigger}, books often lag the business. {sender} at {business}. Interested in {offer}? {link}",
+        3: "{name}, short health check now beats a scramble later — {offer}. — {sender}",
+        7: "Still relevant for {company}? {link} — {sender}",
+    },
+    "consulting": {
+        0: "Hi {name} — {trigger}. {sender} ({business}). Open to {offer}? {link}",
+        3: "{name}, happy to share how similar firms unblocked this — or do {offer}. — {sender}",
+        7: "Last nudge for {company}: {link} — {sender}",
+    },
+    "commercial_re": {
+        0: "Hi {name} — {trigger}. Space needs shift fast. {sender} at {business}. {offer}? {link}",
+        3: "{name}, can send a short space brief matched to inventory — {offer}. — {sender}",
+        7: "If {company} still needs space: {link} — {sender}",
+    },
+    "recruiting": {
+        0: "Hi {name} — saw {trigger}. {sender} ({business}). Can share {offer}. {link}",
+        3: "{name}, still hiring? Happy to send three fits or do {offer}. — {sender}",
+        7: "Last nudge if the role's open: {link} — {sender}",
+    },
+    "legal": {
+        0: "Hi {name} — {trigger} usually brings contract/compliance questions. {sender} at {business}. {offer}? {link}",
+        3: "{name}, happy to keep this in writing — or schedule {offer}. — {sender}",
+        7: "If timing's wrong, ignore. Else: {link} — {sender}",
+    },
+    "it_msp": {
+        0: "Hi {name} — {trigger}. IT debt shows up when growth accelerates. {sender} ({business}). {offer}? {link}",
+        3: "{name}, can send a resilience checklist or do {offer}. — {sender}",
+        7: "Last note on uptime at {company}: {link} — {sender}",
+    },
+    "agency": {
+        0: "Hi {name} — {trigger}. Brand either looks ready or behind. {sender} at {business}. Worth {offer}? {link}",
+        3: "{name}, happy to send 3 concrete fixes on {company}'s public presence — or {offer}. — {sender}",
+        7: "Last creative nudge: {link} — {sender}",
     },
 }
