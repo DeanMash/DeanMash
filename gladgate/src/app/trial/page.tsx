@@ -9,8 +9,8 @@ export default function TrialPage() {
         <div className={styles.brand}>GladGate · Pre-launch trials</div>
         <h1>Codes & links before we launch</h1>
         <p className={styles.sub}>
-          Share these with small businesses for free trials. After trial they
-          pay <strong>$3 / month on EcoCash</strong>. Mashtech posts happy
+          Share these with small businesses for their **one free trial**. After trial,
+          $3 / month on EcoCash — monthly billing starts only when Mashtech confirms payment. Mashtech posts happy
           reviews and tags their page.
         </p>
 
@@ -32,7 +32,7 @@ export default function TrialPage() {
         </div>
 
         <p className={styles.footerLinks}>
-          <Link href="/register">Register without a code (7-day soft trial)</Link>
+          <Link href="/register">Register with default 14-day free trial</Link>
           {" · "}
           <Link href="/">Home</Link>
         </p>

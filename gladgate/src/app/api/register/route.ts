@@ -13,8 +13,6 @@ export async function POST(request: Request) {
     whatsappNumber?: string;
     facebookHandle?: string;
     trialCode?: string;
-    ecocashNumber?: string;
-    payNow?: boolean;
   };
 
   if (!body.name || !body.ownerPhone || !body.facebookHandle || !body.vertical) {
@@ -38,8 +36,6 @@ export async function POST(request: Request) {
       whatsappNumber: body.whatsappNumber,
       facebookHandle: body.facebookHandle,
       trialCode: body.trialCode,
-      ecocashNumber: body.ecocashNumber,
-      payNow: body.payNow,
     });
 
     return NextResponse.json(result);

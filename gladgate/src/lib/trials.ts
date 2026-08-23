@@ -18,9 +18,10 @@ export const TRIAL_OFFERS: TrialOffer[] = [
   },
   {
     code: "ECOCASH3",
-    label: "First month free",
+    label: "Extended free trial",
     days: 30,
-    description: "Try free for 30 days, then $3 / month on EcoCash.",
+    description:
+      "One free trial for 30 days, then $3 / month on EcoCash after Mashtech confirms payment.",
     registerPath: "/register?code=ECOCASH3",
   },
   {

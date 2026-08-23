@@ -33,6 +33,20 @@ export type SubscriptionStatus =
 
 export type PaymentMethod = "ecocash" | "trial";
 
+export type PaymentStatus = "pending" | "confirmed" | "failed";
+
+export interface EcoCashPayment {
+  id: string;
+  businessId: string;
+  ecocashNumber: string;
+  amountUsd: number;
+  reference: string;
+  status: PaymentStatus;
+  createdAt: string;
+  confirmedAt?: string;
+  confirmationSource?: "ecocash_webhook" | "mashtech_ops";
+}
+
 export interface Business {
   id: string;
   slug: string;
@@ -47,10 +61,13 @@ export interface Business {
   publicReviewUrl: string;
   planId: PlanId;
   subscriptionStatus: SubscriptionStatus;
+  /** Exactly one free trial is granted at registration. */
+  freeTrialUsed: boolean;
   trialCode?: string;
   trialEndsAt?: string;
   nextBillingAt?: string;
   ecocashNumber?: string;
+  lastPaymentAt?: string;
   reviewPath: string;
   dashboardPath: string;
   createdAt: string;

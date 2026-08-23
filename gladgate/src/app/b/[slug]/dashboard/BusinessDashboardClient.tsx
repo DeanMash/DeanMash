@@ -13,9 +13,11 @@ type Snapshot = {
     vertical: string;
     facebookHandle: string;
     subscriptionStatus: string;
+    freeTrialUsed?: boolean;
     trialCode?: string;
     trialEndsAt?: string;
     nextBillingAt?: string;
+    lastPaymentAt?: string;
     planId: string;
     reviewPath: string;
     dashboardPath: string;
@@ -23,6 +25,19 @@ type Snapshot = {
   reviewUrl: string;
   dashboardUrl: string;
   qrDataUrl: string;
+  pendingPayment: {
+    reference: string;
+    amountUsd: number;
+    ecocashNumber: string;
+    status: string;
+    createdAt: string;
+  } | null;
+  ecocashInstructions: {
+    name: string;
+    merchantCode: string;
+    instruction: string;
+  };
+  monthlyAmountUsd: number;
   pulses: Array<{
     id: string;
     customerName: string;
@@ -151,9 +166,16 @@ export default function BusinessDashboardClient({
           <p className={styles.meta}>
             {data.business.city}, {data.business.country} ·{" "}
             {data.business.vertical.replace("_", " ")} ·{" "}
-            {data.business.subscriptionStatus}
-            {data.business.trialCode ? ` · trial ${data.business.trialCode}` : ""}
-            {" · "}${3}/mo EcoCash
+            <strong>{data.business.subscriptionStatus}</strong>
+            {data.business.trialEndsAt &&
+            data.business.subscriptionStatus === "trial"
+              ? ` · trial ends ${new Date(data.business.trialEndsAt).toLocaleDateString()}`
+              : ""}
+            {data.business.nextBillingAt &&
+            data.business.subscriptionStatus === "active"
+              ? ` · next bill ${new Date(data.business.nextBillingAt).toLocaleDateString()}`
+              : ""}
+            {" · "}${data.monthlyAmountUsd}/mo EcoCash
           </p>
         </div>
         <div className={styles.actions}>
@@ -281,40 +303,88 @@ export default function BusinessDashboardClient({
 
           {data.business.subscriptionStatus !== "active" ? (
             <div style={{ marginTop: "1.25rem" }}>
-              <h2>Activate EcoCash $3 / month</h2>
-              <div className={styles.formRow}>
-                <input
-                  placeholder="EcoCash number"
-                  value={ecocash}
-                  onChange={(e) => setEcocash(e.target.value)}
-                />
-              </div>
-              <button
-                className={styles.btnWarn}
-                type="button"
-                disabled={busy}
-                onClick={() =>
-                  runAction("EcoCash plan activated.", async () => {
-                    const res = await fetch(
-                      `/api/businesses/${data.business.slug}/actions`,
-                      {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          action: "ecocash",
-                          ecocashNumber: ecocash,
-                        }),
-                      },
-                    );
-                    const json = await res.json();
-                    if (!res.ok) throw new Error(json.error || "Failed");
-                  })
-                }
-              >
-                Confirm $3 EcoCash (demo)
-              </button>
+              <h2>EcoCash ${data.monthlyAmountUsd} / month</h2>
+              <p className={styles.sub}>
+                {data.business.freeTrialUsed
+                  ? "Your one free trial is active. After it ends, pay on EcoCash — monthly billing starts only when Mashtech confirms payment."
+                  : "Pay on EcoCash. Monthly billing starts only when Mashtech confirms payment."}
+              </p>
+
+              {data.pendingPayment ? (
+                <div className={styles.item}>
+                  <div className={styles.name}>Payment pending confirmation</div>
+                  <div className={styles.sub}>
+                    Pay ${data.pendingPayment.amountUsd} to{" "}
+                    {data.ecocashInstructions.name} ({data.ecocashInstructions.merchantCode})
+                    <br />
+                    Reference: <strong>{data.pendingPayment.reference}</strong>
+                    <br />
+                    EcoCash: {data.pendingPayment.ecocashNumber}
+                    <br />
+                    {data.ecocashInstructions.instruction}
+                  </div>
+                  <p className={styles.sub} style={{ marginTop: "0.5rem" }}>
+                    Waiting for Mashtech to receive EcoCash confirmation…
+                  </p>
+                  <button
+                    className={styles.btnSoft}
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      runAction("Status refreshed.", async () => {})
+                    }
+                  >
+                    Refresh status
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.formRow}>
+                    <input
+                      placeholder="Your EcoCash number (07…)"
+                      value={ecocash}
+                      onChange={(e) => setEcocash(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    className={styles.btnWarn}
+                    type="button"
+                    disabled={busy || !ecocash.trim()}
+                    onClick={() =>
+                      runAction("EcoCash payment request created.", async () => {
+                        const res = await fetch(
+                          `/api/businesses/${data.business.slug}/actions`,
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              action: "request_payment",
+                              ecocashNumber: ecocash,
+                            }),
+                          },
+                        );
+                        const json = await res.json();
+                        if (!res.ok) throw new Error(json.error || "Failed");
+                      })
+                    }
+                  >
+                    Request EcoCash payment
+                  </button>
+                </>
+              )}
             </div>
-          ) : null}
+          ) : (
+            <div style={{ marginTop: "1.25rem" }}>
+              <h2>EcoCash plan active</h2>
+              <p className={styles.sub}>
+                Last confirmed payment activates monthly billing until{" "}
+                {data.business.nextBillingAt
+                  ? new Date(data.business.nextBillingAt).toLocaleDateString()
+                  : "renewal"}
+                .
+              </p>
+            </div>
+          )}
         </section>
 
         <section className={styles.panel}>

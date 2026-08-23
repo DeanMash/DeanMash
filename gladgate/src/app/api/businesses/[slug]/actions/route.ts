@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { activateEcoCash, publishSocialQueue } from "@/lib/store";
+import { publishSocialQueue, requestEcoCashPayment } from "@/lib/store";
 
 export async function POST(
   request: Request,
@@ -7,20 +7,17 @@ export async function POST(
 ) {
   const { slug } = await context.params;
   const body = (await request.json()) as {
-    action?: "publish_social" | "ecocash";
+    action?: "publish_social" | "request_payment";
     ecocashNumber?: string;
   };
 
   try {
-    if (body.action === "ecocash") {
-      const business = activateEcoCash({
+    if (body.action === "request_payment") {
+      const result = requestEcoCashPayment({
         businessSlug: slug,
         ecocashNumber: body.ecocashNumber || "",
       });
-      return NextResponse.json({
-        business,
-        message: "EcoCash $3 / month activated (demo confirmation).",
-      });
+      return NextResponse.json(result);
     }
 
     const result = publishSocialQueue(slug);

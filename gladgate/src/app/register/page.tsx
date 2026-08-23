@@ -18,16 +18,15 @@ function RegisterForm() {
   const [ownerPhone, setOwnerPhone] = useState("");
   const [facebookHandle, setFacebookHandle] = useState("");
   const [trialCode, setTrialCode] = useState(presetCode);
-  const [ecocashNumber, setEcocashNumber] = useState("");
-  const [payNow, setPayNow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const tip = useMemo(() => {
-    if (trialCode.trim()) return `Trial code ${trialCode.trim().toUpperCase()} will be applied.`;
-    if (payNow) return "Demo EcoCash $3 confirmation will activate your plan.";
-    return "Without a code you still get a 7-day soft trial + link & QR.";
-  }, [trialCode, payNow]);
+    if (trialCode.trim()) {
+      return `Trial code ${trialCode.trim().toUpperCase()} extends your one free trial. EcoCash $3/month starts only after Mashtech payment confirmation.`;
+    }
+    return "Every shop gets one free trial (14 days). After that, pay $3/month on EcoCash — activation only when payment is confirmed.";
+  }, [trialCode]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -45,8 +44,6 @@ function RegisterForm() {
           ownerPhone,
           facebookHandle,
           trialCode: trialCode || undefined,
-          ecocashNumber: ecocashNumber || undefined,
-          payNow,
         }),
       });
       const data = await res.json();
@@ -65,8 +62,10 @@ function RegisterForm() {
         <div className={styles.brand}>GladGate · Mashtech</div>
         <h1>Register your small business</h1>
         <p className={styles.sub}>
-          Get a review link + QR code. Happy reviews are posted by Mashtech
-          tagging your page. <strong>$3 / month on EcoCash</strong> after trial.
+          One free trial included. Get a review link + QR code. Happy reviews
+          posted by Mashtech tagging your page.{" "}
+          <strong>$3 / month on EcoCash</strong> after trial — only when payment
+          is confirmed.
         </p>
 
         <label className={styles.label}>
@@ -115,7 +114,7 @@ function RegisterForm() {
         </label>
 
         <label className={styles.label}>
-          WhatsApp / EcoCash phone
+          WhatsApp / phone
           <input
             className={styles.input}
             required
@@ -137,7 +136,7 @@ function RegisterForm() {
         </label>
 
         <label className={styles.label}>
-          Trial code (pre-launch)
+          Trial code (optional — extends free trial once)
           <input
             className={styles.input}
             value={trialCode}
@@ -146,33 +145,11 @@ function RegisterForm() {
           />
         </label>
 
-        <label className={styles.check}>
-          <input
-            type="checkbox"
-            checked={payNow}
-            onChange={(e) => setPayNow(e.target.checked)}
-          />
-          Pay $3 now with EcoCash (demo)
-        </label>
-
-        {payNow ? (
-          <label className={styles.label}>
-            EcoCash number
-            <input
-              className={styles.input}
-              value={ecocashNumber}
-              onChange={(e) => setEcocashNumber(e.target.value)}
-              placeholder="07…"
-              required={payNow}
-            />
-          </label>
-        ) : null}
-
         <p className={styles.tip}>{tip}</p>
         {error ? <p className={styles.error}>{error}</p> : null}
 
         <button className={styles.submit} type="submit" disabled={busy}>
-          {busy ? "Creating…" : "Create link & QR"}
+          {busy ? "Creating…" : "Start free trial & get QR"}
         </button>
 
         <p className={styles.footerLinks}>

@@ -22,7 +22,25 @@ Or open `/trial` in the app for the full list.
 3. Customer registry with automatic WhatsApp/SMS follow-ups
 4. Happy reviews queued for **Mashtech** social posting (tags your Facebook page)
 5. Bad / risky reviews held private for owner recovery
-6. EcoCash $3 / month activation (demo confirmation until live billing)
+6. EcoCash **$3 / month** — monthly plan activates **only after Mashtech payment confirmation** (EcoCash webhook)
+
+## Billing flow
+
+1. **Register** → one free trial (14 days, or longer with a trial code)
+2. After trial → owner clicks **Request EcoCash payment** on dashboard
+3. Shop pays **$3** on EcoCash using the generated **reference** (e.g. `GG-SHOP-ABC123`)
+4. Mashtech receives EcoCash confirmation → calls webhook → **monthly plan activated**
+
+Mashtech webhook (server-side only):
+
+```powershell
+curl -X POST http://localhost:3000/api/payments/confirm `
+  -H "Content-Type: application/json" `
+  -H "X-Mashtech-Secret: mashtech-ecocash-demo-secret" `
+  -d "{\"reference\":\"GG-YOUR-REFERENCE\"}"
+```
+
+Set `ECOCASH_WEBHOOK_SECRET` in production. Shops cannot activate billing themselves — only confirmed payments activate the plan.
 
 ## Run on Windows PowerShell (copy each line)
 

@@ -1,3 +1,11 @@
+import {
+  DEFAULT_FREE_TRIAL_DAYS,
+  ECOCASH_MERCHANT,
+  ECOCASH_MONTHLY_USD,
+  generatePaymentReference,
+  nextBillingDate,
+  syncSubscriptionStatus,
+} from "./billing";
 import { decideDisposition } from "./engine";
 import { nextFollowUpAt, isDue } from "./followups";
 import { createQueuedPost, markPosted } from "./social";
@@ -7,6 +15,7 @@ import type {
   Business,
   Channel,
   CustomerPulse,
+  EcoCashPayment,
   FlaggedReview,
   FollowUpJob,
   PulseRating,
@@ -17,6 +26,7 @@ import type {
 
 interface AppState {
   businesses: Business[];
+  payments: EcoCashPayment[];
   customers: RegisteredCustomer[];
   pulses: CustomerPulse[];
   flagged: FlaggedReview[];
@@ -62,6 +72,7 @@ function seedBusiness(): Business {
     publicReviewUrl: "https://g.page/r/demo-amanzi-grill/review",
     planId: "ecocash_starter",
     subscriptionStatus: "trial",
+    freeTrialUsed: true,
     trialCode: "MASHTECH14",
     trialEndsAt: trialEndsAt(14),
     reviewPath: `/b/${slug}`,
@@ -73,6 +84,7 @@ function seedBusiness(): Business {
 function defaultState(): AppState {
   return {
     businesses: [seedBusiness()],
+    payments: [],
     customers: [],
     pulses: [],
     flagged: [],
@@ -117,8 +129,6 @@ export type RegisterInput = {
   whatsappNumber?: string;
   facebookHandle: string;
   trialCode?: string;
-  ecocashNumber?: string;
-  payNow?: boolean;
 };
 
 export function registerBusiness(input: RegisterInput): {
@@ -141,29 +151,11 @@ export function registerBusiness(input: RegisterInput): {
 
   const slug = uniqueSlug(state, name);
   const now = new Date();
-  let subscriptionStatus: Business["subscriptionStatus"] = "trial";
-  let trialEnds: string | undefined;
-  let nextBillingAt: string | undefined;
-  let message: string;
-
-  if (trial) {
-    trialEnds = trialEndsAt(trial.days, now);
-    subscriptionStatus = "trial";
-    message = `Trial ${trial.code} applied for ${trial.days} days. Your link and QR are ready.`;
-  } else if (input.payNow && input.ecocashNumber) {
-    subscriptionStatus = "active";
-    const bill = new Date(now);
-    bill.setMonth(bill.getMonth() + 1);
-    nextBillingAt = bill.toISOString();
-    message =
-      "EcoCash $3 payment recorded (demo). Mashtech will renew monthly.";
-  } else {
-    // Soft trial for launch so shops can still get a link before paying
-    trialEnds = trialEndsAt(7, now);
-    subscriptionStatus = "trial";
-    message =
-      "7-day soft trial started. Use a trial code or EcoCash $3 to continue after launch.";
-  }
+  const trialDays = trial?.days ?? DEFAULT_FREE_TRIAL_DAYS;
+  const trialEnds = trialEndsAt(trialDays, now);
+  const message = trial
+    ? `One free trial activated (${trial.code}, ${trialDays} days). Pay $3 EcoCash after trial — monthly billing starts only when Mashtech confirms payment.`
+    : `One free trial activated (${trialDays} days). Your link and QR are ready. EcoCash $3/month starts only after payment confirmation.`;
 
   const business: Business = {
     id: uid("biz"),
@@ -178,11 +170,10 @@ export function registerBusiness(input: RegisterInput): {
     facebookHandle: input.facebookHandle.trim().replace(/^@/, "@"),
     publicReviewUrl: "",
     planId: "ecocash_starter",
-    subscriptionStatus,
-    trialCode: trial?.code,
+    subscriptionStatus: "trial",
+    freeTrialUsed: true,
+    trialCode: trial?.code ?? "FREETRIAL",
     trialEndsAt: trialEnds,
-    nextBillingAt,
-    ecocashNumber: input.ecocashNumber?.trim(),
     reviewPath: `/b/${slug}`,
     dashboardPath: `/b/${slug}/dashboard`,
     createdAt: now.toISOString(),
@@ -200,6 +191,7 @@ export function registerBusiness(input: RegisterInput): {
 export function getBusinessSnapshot(slug: string) {
   const business = getBusinessBySlug(slug);
   if (!business) return null;
+  syncSubscriptionStatus(business);
   const state = getState();
   const pulses = state.pulses
     .filter((p) => p.businessId === business.id)
@@ -213,12 +205,20 @@ export function getBusinessSnapshot(slug: string) {
   const socialPosts = state.socialPosts
     .filter((s) => s.businessId === business.id)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const payments = state.payments
+    .filter((p) => p.businessId === business.id)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const pendingPayment = payments.find((p) => p.status === "pending");
 
   const rated = pulses.filter((p) => p.rating);
   const publicRouted = pulses.filter((p) => p.disposition === "routed_public");
 
   return {
     business,
+    payments,
+    pendingPayment: pendingPayment ?? null,
+    ecocashInstructions: ECOCASH_MERCHANT,
+    monthlyAmountUsd: ECOCASH_MONTHLY_USD,
     pulses,
     flagged,
     customers,
@@ -537,7 +537,7 @@ export function runDueFollowUps(businessSlug: string): {
   return { jobs, pulses };
 }
 
-export function activateEcoCash(input: {
+export function requestEcoCashPayment(input: {
   businessSlug: string;
   ecocashNumber: string;
 }) {
@@ -545,12 +545,84 @@ export function activateEcoCash(input: {
   if (!business) throw new Error("Business not found");
   if (!input.ecocashNumber.trim()) throw new Error("EcoCash number required");
 
-  business.subscriptionStatus = "active";
+  const state = getState();
+  const existing = state.payments.find(
+    (p) => p.businessId === business.id && p.status === "pending",
+  );
+  if (existing) {
+    return {
+      payment: existing,
+      business,
+      instructions: ECOCASH_MERCHANT,
+      message:
+        "Payment already pending. Complete EcoCash $3 — activation happens when Mashtech confirms.",
+    };
+  }
+
   business.ecocashNumber = input.ecocashNumber.trim();
+
+  const payment: EcoCashPayment = {
+    id: uid("pay"),
+    businessId: business.id,
+    ecocashNumber: input.ecocashNumber.trim(),
+    amountUsd: ECOCASH_MONTHLY_USD,
+    reference: generatePaymentReference(business.slug),
+    status: "pending",
+    createdAt: new Date().toISOString(),
+  };
+  state.payments.unshift(payment);
+
+  return {
+    payment,
+    business,
+    instructions: ECOCASH_MERCHANT,
+    message:
+      "Pay $3 on EcoCash with the reference below. Monthly plan activates only after Mashtech payment confirmation.",
+  };
+}
+
+export function confirmEcoCashPayment(input: {
+  reference: string;
+  source?: EcoCashPayment["confirmationSource"];
+}) {
+  const state = getState();
+  const payment = state.payments.find(
+    (p) => p.reference === input.reference.trim(),
+  );
+  if (!payment) throw new Error("Payment reference not found");
+  if (payment.status === "confirmed") {
+    const business = getBusinessById(payment.businessId);
+    if (!business) throw new Error("Business not found");
+    return { payment, business, alreadyConfirmed: true };
+  }
+  if (payment.status === "failed") {
+    throw new Error("Payment was marked failed");
+  }
+
+  const business = getBusinessById(payment.businessId);
+  if (!business) throw new Error("Business not found");
+
+  const now = new Date();
+  payment.status = "confirmed";
+  payment.confirmedAt = now.toISOString();
+  payment.confirmationSource = input.source ?? "ecocash_webhook";
+
+  business.subscriptionStatus = "active";
+  business.ecocashNumber = payment.ecocashNumber;
   business.planId = "ecocash_starter";
-  const bill = new Date();
-  bill.setMonth(bill.getMonth() + 1);
-  business.nextBillingAt = bill.toISOString();
+  business.lastPaymentAt = now.toISOString();
+  business.nextBillingAt = nextBillingDate(now);
   business.trialEndsAt = undefined;
-  return business;
+
+  return { payment, business, alreadyConfirmed: false };
+}
+
+/** @deprecated Use confirmEcoCashPayment after webhook confirmation */
+export function activateEcoCash(input: {
+  businessSlug: string;
+  ecocashNumber: string;
+}) {
+  throw new Error(
+    "Monthly EcoCash activation requires payment confirmation. Request payment first, then Mashtech confirms via webhook.",
+  );
 }
