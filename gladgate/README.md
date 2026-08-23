@@ -1,6 +1,15 @@
 # GladGate web app (Mashtech)
 
+## First-time setup on Windows PowerShell
+
+Copy **each line** (do not use `path\to\...`):
+
 ```powershell
+cd $HOME
+git clone https://github.com/DeanMash/DeanMash.git
+cd DeanMash
+git checkout cursor/gladgate-review-saas-68cb
+cd gladgate
 npm install
 npm run build
 npm start

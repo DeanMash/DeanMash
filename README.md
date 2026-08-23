@@ -24,24 +24,37 @@ Or open `/trial` in the app for the full list.
 5. Bad / risky reviews held private for owner recovery
 6. EcoCash $3 / month activation (demo confirmation until live billing)
 
-## Run (Windows PowerShell — one line at a time)
+## Run on Windows PowerShell (copy each line)
+
+You must **clone the repo first**. Do not type `path\to\...` — that was only an example.
 
 ```powershell
+cd $HOME
+git clone https://github.com/DeanMash/DeanMash.git
+cd DeanMash
+git checkout cursor/gladgate-review-saas-68cb
 cd gladgate
 npm install
 npm run build
 npm start
 ```
 
-Or for development:
+Then open http://localhost:3000 in your browser.
+
+If you already cloned earlier:
 
 ```powershell
+cd $HOME\DeanMash
+git fetch
+git checkout cursor/gladgate-review-saas-68cb
+git pull
 cd gladgate
 npm install
-npm run dev
+npm run build
+npm start
 ```
 
-Open http://localhost:3000
+For hot reload during development, use `npm run dev` instead of `build` + `start`.
 
 ### Useful URLs
 
@@ -54,7 +67,7 @@ Open http://localhost:3000
 ## Tests
 
 ```powershell
-cd gladgate
+cd $HOME\DeanMash\gladgate
 npm test
 npm run lint
 npm run build
