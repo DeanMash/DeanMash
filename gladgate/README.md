@@ -26,6 +26,14 @@ Open http://localhost:3000
 | `/mashtech/login` | Mashtech sign-in (password required) |
 | `/mashtech` | Mashtech control room: all shops, JPG posts, avg ratings |
 
+| Script | Purpose |
+| --- | --- |
+| `npm run dev` | Hot reload |
+| `npm start` | Production (after build) |
+| `npm test` | Engine + trial + Mashtech tests |
+| `npm run lint` | ESLint |
+| `npm run build` | Production build |
+
 Default Mashtech password (change before launch): `Mashtech2026!` via `MASHTECH_DASHBOARD_PASSWORD` in `.env.local`.
 
 See the [root README](../README.md) for EcoCash pricing, trial codes, and **Vercel go-live steps**.
