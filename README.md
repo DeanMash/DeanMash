@@ -1,3 +1,20 @@
+# DeanMash products
+
+## OpenPipe (prospecting + email / WhatsApp outbound)
+
+Find prospects, write personalised emails **and WhatsApp**, and send at scale — for small organisations (insurance brokers, financial advisors, B2B). See [OPENPIPE.md](OPENPIPE.md).
+
+```bash
+pip install -r requirements.txt
+python -m openpipe
+```
+
+- Site: `http://127.0.0.1:8090/`
+- **Register:** `http://127.0.0.1:8090/register`
+- Dashboard: `http://127.0.0.1:8090/dashboard`
+
+---
+
 # Deriv Trade Advisor (suggestions only)
 
 Python tool that connects to your **Deriv** account, reads recent market ticks and trade history, pulls public financial news, then produces **trade suggestions with confidence scores**.

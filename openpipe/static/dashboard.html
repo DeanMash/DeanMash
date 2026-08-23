@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenPipe Operator Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/dashboard.css" />
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="/">Open<span>Pipe</span></a>
+      <div class="top-actions">
+        <label class="icp-label">
+          Org
+          <select id="biz-switch" aria-label="Switch organisation"></select>
+        </label>
+        <input class="token" id="token" type="password" placeholder="Access token" />
+        <button class="btn secondary" id="btn-refresh" type="button">Refresh</button>
+        <button class="btn secondary" id="btn-discover" type="button">Find prospects</button>
+        <button class="btn" id="btn-plan" type="button">Rebuild plan</button>
+        <button class="btn signal" id="btn-run" type="button">Send due now</button>
+        <a class="btn secondary" href="/register">Register</a>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="biz-line">
+        <div>
+          <h1 id="biz-name">Loading…</h1>
+          <p id="biz-meta"></p>
+        </div>
+        <p class="tiny">
+          Demo mode logs email + WhatsApp — no live sends until credentials are connected.
+          Registered orgs with auto-run on send due messages in the background.
+        </p>
+      </div>
+
+      <section class="start-guide" id="start-guide" aria-label="Where to start">
+        <div class="start-copy">
+          <h2>Don't know where to start?</h2>
+          <p id="start-tip">Register, find prospects, preview email/WhatsApp, then send.</p>
+        </div>
+        <ol class="start-steps">
+          <li data-step="1"><span>01</span> Find prospects</li>
+          <li data-step="2"><span>02</span> Preview copy</li>
+          <li data-step="3"><span>03</span> Send due messages</li>
+        </ol>
+      </section>
+
+      <section class="settings-row" id="settings-row">
+        <label>
+          Channels
+          <select id="channel-select">
+            <option value="both">Email + WhatsApp</option>
+            <option value="email">Email only</option>
+            <option value="whatsapp">WhatsApp only</option>
+          </select>
+        </label>
+        <label>
+          Auto-send
+          <select id="auto-run-select">
+            <option value="1">On</option>
+            <option value="0">Off</option>
+          </select>
+        </label>
+        <button class="btn secondary" id="btn-save-settings" type="button">Save settings</button>
+      </section>
+
+      <section class="stats" id="stats"></section>
+
+      <div class="grid">
+        <section class="panel">
+          <h2>Prospects</h2>
+          <form class="form-row" id="add-prospect">
+            <input name="full_name" required placeholder="Full name" />
+            <input name="email" type="email" placeholder="email@company.com" />
+            <input name="phone" placeholder="WhatsApp +263…" />
+            <input name="company" placeholder="Company" />
+            <input name="title" placeholder="Title" />
+            <input name="trigger" placeholder="Trigger signal" />
+            <button class="btn" type="submit">Add &amp; sequence</button>
+          </form>
+          <div style="overflow-x: auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Prospect</th>
+                  <th>Company</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="prospects-body"></tbody>
+            </table>
+          </div>
+          <div class="preview-box" id="preview">
+            <h3>Message preview</h3>
+            <p>Select Preview on a prospect to see Day 0 / 3 / 7 email or WhatsApp copy.</p>
+          </div>
+        </section>
+
+        <div>
+          <section class="panel" style="margin-bottom: 1.25rem">
+            <h2>Outbound queue</h2>
+            <div id="messages"></div>
+          </section>
+          <section class="panel">
+            <h2>Activity</h2>
+            <div id="events"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script src="/static/dashboard.js"></script>
+  </body>
+</html>
