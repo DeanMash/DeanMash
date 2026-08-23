@@ -80,6 +80,8 @@ type Snapshot = {
     socialPosted: number;
     happyRate: number;
     followUpsDue: number;
+    averageRating: number | null;
+    reviewCount: number;
   };
 };
 
