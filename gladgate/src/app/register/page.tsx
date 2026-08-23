@@ -48,7 +48,7 @@ function RegisterForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
-      router.push(data.mashtechPath || `/mashtech?project=${data.business.slug}`);
+      router.push(data.business.dashboardPath);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {

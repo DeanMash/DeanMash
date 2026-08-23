@@ -246,6 +246,12 @@ export default function BusinessDashboardClient({
           <span>Registered customers</span>
         </div>
         <div className={styles.stat}>
+          <strong>
+            {data.stats.averageRating ?? "—"}
+          </strong>
+          <span>Avg rating ({data.stats.reviewCount ?? 0})</span>
+        </div>
+        <div className={styles.stat}>
           <strong>{data.stats.publicRouted}</strong>
           <span>Happy → Mashtech</span>
         </div>

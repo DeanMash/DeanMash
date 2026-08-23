@@ -13,7 +13,7 @@ export default function HomePage() {
         <nav className={styles.navLinks}>
           <a href="#how">How it works</a>
           <a href="#pricing">$3 EcoCash</a>
-          <Link href="/mashtech">Mashtech</Link>
+          <Link href="/mashtech/login">Mashtech login</Link>
           <Link href="/trial">Trial codes</Link>
           <Link className={styles.navCta} href="/register">
             Register shop
@@ -191,7 +191,7 @@ export default function HomePage() {
           <div>Ask happy. Hold hurt. Post glad reviews.</div>
         </div>
         <div>
-          <Link href="/mashtech">Mashtech dashboard →</Link>
+          <Link href="/mashtech/login">Mashtech login →</Link>
           {" · "}
           <Link href="/register">Register →</Link>
           {" · "}

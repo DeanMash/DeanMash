@@ -24,8 +24,14 @@ type Snapshot = {
       postsQueued: number;
       postsLive: number;
       reviews: number;
+      averageRating: number | null;
       flaggedOpen: number;
       paymentsPending: number;
+    };
+    rating: {
+      average: number | null;
+      count: number;
+      starsLabel: string;
     };
   }>;
   posts: Array<{
@@ -38,6 +44,7 @@ type Snapshot = {
     businessName: string;
     businessSlug: string;
     reviewPath: string;
+    imageUrl: string;
     createdAt: string;
   }>;
   pendingPayments: Array<{
@@ -56,6 +63,8 @@ type Snapshot = {
     paymentsPending: number;
     trials: number;
     active: number;
+    averageRating: number | null;
+    totalReviews: number;
   };
 };
 
@@ -131,6 +140,11 @@ export default function MashtechClient({
     }
   }
 
+  async function logout() {
+    await fetch("/api/mashtech/login", { method: "DELETE" });
+    window.location.href = "/mashtech/login";
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.top}>
@@ -152,6 +166,9 @@ export default function MashtechClient({
           </button>
           <button className={styles.btnSoft} disabled={busy} onClick={refresh}>
             Refresh
+          </button>
+          <button className={styles.btnSoft} type="button" onClick={logout}>
+            Sign out
           </button>
           <Link className={styles.btnSoft} href="/register">
             Register shop
@@ -183,9 +200,9 @@ export default function MashtechClient({
         </div>
         <div className={styles.stat}>
           <strong>
-            {data.stats.active}/{data.stats.trials}
+            {data.stats.averageRating ?? "—"}
           </strong>
-          <span>Active / on trial</span>
+          <span>Avg rating (all shops)</span>
         </div>
       </div>
 
@@ -213,9 +230,10 @@ export default function MashtechClient({
                         {project.business.vertical.replace("_", " ")} ·{" "}
                         {project.business.facebookHandle}
                         <br />
+                        <strong>{project.rating.starsLabel}</strong>
+                        {" · "}
                         {project.stats.postsQueued} posts ready ·{" "}
-                        {project.stats.reviews} reviews · owner{" "}
-                        {project.business.ownerPhone}
+                        owner {project.business.ownerPhone}
                       </div>
                     </div>
                     <span
@@ -303,15 +321,21 @@ export default function MashtechClient({
                   <pre className={styles.pre}>
                     {post.readyCaption || post.body}
                   </pre>
+                  <a href={post.imageUrl} target="_blank" rel="noreferrer">
+                    {/* Dynamic JPEG from API — not optimizable via next/image */}
+                    <img
+                      className={styles.preview}
+                      src={post.imageUrl}
+                      alt={`${post.businessName} social JPG`}
+                    />
+                  </a>
                   <div className={styles.cardActions}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        copyCaption(post.readyCaption || post.body)
-                      }
-                    >
+                    <button type="button" onClick={() => copyCaption(post.readyCaption || post.body)}>
                       Copy caption
                     </button>
+                    <a href={post.imageUrl} download={`gladgate-${post.businessSlug}-${post.id}.jpg`}>
+                      Download JPG
+                    </a>
                     {post.status === "queued" ? (
                       <button
                         type="button"

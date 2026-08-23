@@ -7,6 +7,7 @@ import {
   syncSubscriptionStatus,
 } from "./billing";
 import { decideDisposition } from "./engine";
+import { averageRating } from "./ratings";
 import { nextFollowUpAt, isDue } from "./followups";
 import { createQueuedPost, createLaunchPost, markPosted } from "./social";
 import { findTrial, trialEndsAt } from "./trials";
@@ -225,6 +226,7 @@ export function getBusinessSnapshot(slug: string) {
 
   const rated = pulses.filter((p) => p.rating);
   const publicRouted = pulses.filter((p) => p.disposition === "routed_public");
+  const rating = averageRating(pulses);
 
   return {
     business,
@@ -236,6 +238,7 @@ export function getBusinessSnapshot(slug: string) {
     flagged,
     customers,
     socialPosts,
+    rating,
     stats: {
       customers: customers.length,
       asksSent: pulses.length,
@@ -249,6 +252,8 @@ export function getBusinessSnapshot(slug: string) {
       followUpsDue: customers.filter(
         (c) => !c.optedOut && isDue(c.nextFollowUpAt),
       ).length,
+      averageRating: rating.average,
+      reviewCount: rating.count,
     },
   };
 }
@@ -466,6 +471,19 @@ export function submitPulseResponse(input: {
   };
 }
 
+export function getPostById(postId: string) {
+  const state = getState();
+  const post = state.socialPosts.find((p) => p.id === postId);
+  if (!post) return null;
+  const business = getBusinessById(post.businessId);
+  if (!business) return null;
+  const pulse =
+    post.pulseId !== "launch"
+      ? state.pulses.find((p) => p.id === post.pulseId)
+      : undefined;
+  return { post, business, pulse };
+}
+
 export function publishSocialQueue(businessSlug: string) {
   const business = getBusinessBySlug(businessSlug);
   if (!business) throw new Error("Business not found");
@@ -514,12 +532,15 @@ export function getMashtechSnapshot() {
     const flagged = state.flagged.filter(
       (f) => f.businessId === business.id && f.status !== "resolved",
     );
+    const rating = averageRating(pulses);
     return {
       business,
+      rating,
       stats: {
         postsQueued: posts.filter((p) => p.status === "queued").length,
         postsLive: posts.filter((p) => p.status === "posted").length,
-        reviews: pulses.filter((p) => p.rating).length,
+        reviews: rating.count,
+        averageRating: rating.average,
         flaggedOpen: flagged.length,
         paymentsPending: payments.filter((p) => p.status === "pending").length,
       },
@@ -532,6 +553,7 @@ export function getMashtechSnapshot() {
       const business = getBusinessById(post.businessId);
       return {
         ...post,
+        imageUrl: `/api/posts/${post.id}/image`,
         businessName: business?.name ?? "Unknown",
         businessSlug: business?.slug ?? "",
         reviewPath: business?.reviewPath ?? "",
@@ -551,6 +573,9 @@ export function getMashtechSnapshot() {
       };
     });
 
+  const allPulses = state.pulses;
+  const networkRating = averageRating(allPulses);
+
   return {
     projects,
     posts,
@@ -564,6 +589,8 @@ export function getMashtechSnapshot() {
         .length,
       active: projects.filter((p) => p.business.subscriptionStatus === "active")
         .length,
+      averageRating: networkRating.average,
+      totalReviews: networkRating.count,
     },
   };
 }

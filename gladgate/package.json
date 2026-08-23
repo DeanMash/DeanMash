@@ -7,13 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test src/lib/engine.test.ts src/lib/billing.test.ts"
+    "test": "tsx --test src/lib/engine.test.ts src/lib/billing.test.ts src/lib/auth.test.ts"
   },
   "dependencies": {
     "next": "16.2.12",
     "qrcode": "^1.5.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "@types/node": "^20",

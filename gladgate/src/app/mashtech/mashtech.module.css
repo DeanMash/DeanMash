@@ -228,6 +228,27 @@
   font-weight: 600;
 }
 
+.ratingPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(232, 155, 12, 0.2);
+  color: #6a5200;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-top: 0.35rem;
+}
+
+.preview {
+  width: 100%;
+  max-width: 280px;
+  border-radius: 12px;
+  margin: 0.55rem 0;
+  border: 1px solid rgba(21, 32, 25, 0.1);
+}
+
 @media (max-width: 960px) {
   .stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));

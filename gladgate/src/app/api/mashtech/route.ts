@@ -1,4 +1,6 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { isMashtechAuthed, MASHTECH_COOKIE } from "@/lib/auth";
 import {
   confirmEcoCashPayment,
   getMashtechSnapshot,
@@ -6,11 +8,24 @@ import {
   publishPostById,
 } from "@/lib/store";
 
+async function requireAuth() {
+  const jar = await cookies();
+  if (!isMashtechAuthed(jar.get(MASHTECH_COOKIE)?.value)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  return null;
+}
+
 export async function GET() {
+  const denied = await requireAuth();
+  if (denied) return denied;
   return NextResponse.json(getMashtechSnapshot());
 }
 
 export async function POST(request: Request) {
+  const denied = await requireAuth();
+  if (denied) return denied;
+
   const body = (await request.json()) as {
     action?: "publish_all" | "publish_post" | "confirm_payment";
     postId?: string;

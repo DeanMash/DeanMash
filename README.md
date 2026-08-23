@@ -74,25 +74,45 @@ npm start
 
 For hot reload during development, use `npm run dev` instead of `build` + `start`.
 
-## Mashtech dashboard
+## Mashtech dashboard (login required)
 
-After a shop registers, the system **forwards to `/mashtech`** where:
+Open http://localhost:3000/mashtech/login
 
-- **All projects** (registered shops) are listed
-- A **launch post** is auto-created for each new project (ready to copy/publish)
-- Happy reviews auto-create **review posts** tagging the shop’s page
-- Mashtech can **copy captions**, **mark published**, or **publish all queued**
-- Pending EcoCash payments can be **confirmed** (activates monthly plan)
+Default demo password: `Mashtech2026!` — **change before launch** via `MASHTECH_DASHBOARD_PASSWORD`.
 
-Open: http://localhost:3000/mashtech
+Features:
+
+- **All projects** with **average star rating** per shop
+- **Auto-created social posts** — caption + **Download JPG** (1080×1080 JPEG)
+- Copy caption · Mark published · Publish all
+- Confirm EcoCash payments
+
+Shops register → go to their shop dashboard. Project + launch post appear in Mashtech automatically.
 
 ### Useful URLs
 
-- `/mashtech` — Mashtech control room (all projects + auto posts)
-- `/register?code=MASHTECH14` — register with trial (then forwards to Mashtech)
-- `/trial` — all trial codes & links
-- `/b/amanzi-grill` — sample public review page (QR target)
-- `/b/amanzi-grill/dashboard` — sample owner dashboard with QR
+- `/mashtech/login` — Mashtech sign-in
+- `/mashtech` — control room (after login)
+- `/register?code=MASHTECH14` — register a shop
+- `/trial` — trial codes
+- `/b/amanzi-grill/dashboard` — sample shop dashboard
+
+## Go live on the internet (Vercel)
+
+1. Push this branch to GitHub
+2. Import repo at [vercel.com](https://vercel.com) → root directory: `gladgate`
+3. Add environment variables from `gladgate/.env.example`:
+   - `NEXT_PUBLIC_APP_URL` = your live URL
+   - `MASHTECH_DASHBOARD_PASSWORD` = strong password
+   - `MASHTECH_SESSION_SECRET` = random string
+   - `ECOCASH_WEBHOOK_SECRET` = webhook secret
+4. Deploy → open `https://your-app.vercel.app/mashtech/login`
+
+```powershell
+cd gladgate
+copy .env.example .env.local
+# edit .env.local, then for Vercel paste same values in project Settings → Environment Variables
+```
 
 ## Tests
 
